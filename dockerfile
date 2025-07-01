@@ -39,12 +39,14 @@ WORKDIR /app
 # Define o ambiente como produção, o que desabilita features de dev do Next.js
 ENV NODE_ENV=production
 
-# Copia as dependências de produção do estágio 'deps'
-COPY --from=deps /app/node_modules ./node_modules
+# Em "ESTÁGIO 4: Imagem Final de Produção"
+COPY --from=builder /app/node_modules ./node_modules
 # Copia a pasta .next com a aplicação buildada do estágio 'builder'
 COPY --from=builder /app/.next ./.next
 # Copia a pasta 'public'
 COPY --from=builder /app/public ./public
+# Copia o Prisma Client gerado do estágio 'builder'
+COPY --from=builder /app/prisma ./prisma
 # Copia o 'package.json' para poder rodar o 'npm start'
 COPY package.json .
 
