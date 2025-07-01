@@ -38,7 +38,7 @@ git clone https://github.com/SEU_USUARIO/rifa-online.git
 ### 2. Navegue para a Pasta do Projeto
 
 ```bash
-cd rifa-online
+cd app_rifas
 ```
 
 ### 3. Configure as Variáveis de Ambiente
@@ -66,7 +66,7 @@ cp .env.example .env
 Este é o comando principal! Ele vai baixar as imagens necessárias, construir a imagem da nossa aplicação e iniciar tudo.
 
 ```bash
-docker-compose up --build
+docker-compose up -d
 ```
 
 > ⚠️ **Atenção:** A primeira vez que você rodar este comando pode demorar alguns minutos, pois ele precisa baixar a imagem do PostgreSQL e construir a imagem da aplicação. Nas próximas vezes, será muito mais rápido!
@@ -78,7 +78,7 @@ Você verá muitos logs no seu terminal. Deixe este terminal aberto.
 Com os containers rodando, abra um novo terminal (deixe o anterior aberto) e rode o seguinte comando para criar as tabelas no banco de dados:
 
 ```bash
-docker-compose exec app npm run db:push
+npx prisma db push
 ```
 
 Este comando executa o `prisma db push` dentro do container da aplicação, sincronizando o seu `schema.prisma` com o banco de dados.
@@ -117,15 +117,6 @@ docker-compose down
 docker-compose logs -f app
 ```
 
-### Para executar um comando dentro do container da aplicação:
-
-```bash
-docker-compose exec app <seu_comando_aqui>
-
-# Exemplo: Acessar o terminal do container
-docker-compose exec app bash
-```
-
 ## 🗄️ Fluxo de Trabalho com o Banco de Dados (Prisma)
 
 Qualquer alteração na estrutura do banco de dados é feita através do arquivo `prisma/schema.prisma`.
@@ -135,7 +126,7 @@ Qualquer alteração na estrutura do banco de dados é feita através do arquivo
 Crie um novo arquivo de migração para registrar suas alterações. Isso é uma boa prática para manter o histórico do banco.
 
 ```bash
-docker-compose exec app npx prisma migrate dev --name nome-da-sua-alteracao
+npx prisma migrate dev --name "nome-da-sua-migracao"
 ```
 
 **Exemplo:** `... --name cria-tabela-promocoes`
@@ -147,7 +138,7 @@ Isso irá aplicar a alteração e criar um novo arquivo de migração na pasta `
 Você só precisa aplicar as migrações que ainda não estão no seu banco de dados.
 
 ```bash
-docker-compose exec app npx prisma migrate deploy
+ npx prisma migrate deploy
 ```
 
 ## 🔐 Variáveis de Ambiente
@@ -172,8 +163,7 @@ O arquivo `.env` é usado para configurar a aplicação. Aqui está uma descriç
 │   ├── lib/            # Funções utilitárias, instância do Prisma, etc.
 │   └── ...
 ├── .env.example        # Arquivo de exemplo para as variáveis de ambiente
-├── docker-compose.yml  # Orquestrador dos nossos containers Docker
-└── Dockerfile          # Receita para construir a imagem da nossa aplicação
+└── docker-compose.yml  # Orquestrador dos nossos containers Docker
 ```
 
 ## ❓ Dúvidas Comuns (Troubleshooting)
@@ -189,30 +179,6 @@ O arquivo `.env` é usado para configurar a aplicação. Aqui está uma descriç
 **Causa:** Outro serviço na sua máquina já está usando a porta 3000 ou 5432.
 
 **Solução:** Pare o serviço conflitante ou altere a porta no arquivo `docker-compose.yml`. Por exemplo, para usar a porta 3001 para a aplicação, mude `ports: - "3000:3000"` para `ports: - "3001:3000"`.
-
-### "Fiz uma alteração no código e não apareceu no navegador!":
-
-**Causa:** O Next.js tem Hot Reload para a maioria das alterações de código em `src/`. No entanto, alterações em arquivos de configuração como `Dockerfile`, `docker-compose.yml` ou `package.json` exigem uma reconstrução da imagem.
-
-**Solução:** Pare tudo com `docker-compose down` e suba novamente com `docker-compose up --build`.
-
-## 📄 .env.example
-
-Crie um arquivo chamado `.env.example` na raiz do projeto com o seguinte conteúdo:
-
-```ini
-# Este é um arquivo de exemplo. Copie para um arquivo .env para usar no desenvolvimento.
-# Os valores abaixo são configurados para funcionar com o docker-compose.yml padrão.
-
-# URL de Conexão com o Banco de Dados PostgreSQL
-DATABASE_URL="postgresql://devuser:devpassword@db:5432/rifa_db?schema=public"
-
-# Chaves de API de Terceiros (obter nos respectivos sites)
-MERCADO_PAGO_ACCESS_TOKEN="COLOQUE_SEU_TOKEN_DE_TESTE_AQUI"
-
-# Variáveis Públicas do Next.js
-NEXT_PUBLIC_API_URL="http://localhost:3000"
-```
 
 ---
 
