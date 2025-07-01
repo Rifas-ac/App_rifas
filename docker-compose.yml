@@ -1,44 +1,23 @@
-# Definição dos serviços (containers)
+version: "3.8"
+
+# Define apenas o serviço do banco de dados
 services:
-  # Serviço do Banco de Dados PostgreSQL
   db:
-    image: postgres:15-alpine # Imagem oficial do PostgreSQL
+    image: postgres:15-alpine
     container_name: rifa_db
     restart: always
+    # Mapeia a porta 5432 do container para a porta 5432 da sua máquina (localhost)
     ports:
-      - "5432:5432" # Mapeia a porta do container para a sua máquina local
+      - "5432:5432"
+    # Variáveis de ambiente para criar o banco, usuário e senha
     environment:
       POSTGRES_DB: rifa_db
       POSTGRES_USER: devuser
       POSTGRES_PASSWORD: devpassword
+    # Volume para garantir que os dados do banco não sejam perdidos
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Persiste os dados do banco
-    networks:
-      - rifa_network
+      - postgres_data:/var/lib/postgresql/data
 
-  # Serviço da Aplicação Next.js
-  app:
-    container_name: rifa_app
-    build: . # Constrói a imagem usando o Dockerfile na pasta atual
-    restart: always
-    ports:
-      - "3000:3000" # Mapeia a porta do Next.js para a sua máquina
-    environment:
-      # A URL de conexão aponta para o serviço 'db' na rede interna do Docker
-
-      DATABASE_URL: "postgresql://devuser:devpassword@db:5432/rifa_db?schema=public"
-      # MERCADO_PAGO_ACCESS_TOKEN: SEU_TOKEN_AQUI
-      NEXT_PUBLIC_API_URL: http://localhost:3000
-    depends_on:
-      - db # Garante que o serviço 'db' suba antes do serviço 'app'
-    networks:
-      - rifa_network
-
-# Definição dos volumes
+# Definição do volume nomeado
 volumes:
-  postgres_data: # O nome do volume usado pelo serviço 'db'
-
-# Definição das redes
-networks:
-  rifa_network:
-    driver: bridge
+  postgres_data:
