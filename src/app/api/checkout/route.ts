@@ -54,7 +54,7 @@ export async function POST(request: Request) {
         email: dadosParaPagamento.usuario.email,
         first_name: dadosParaPagamento.usuario.nome,
       },
-      notification_url: "https://f2a2-2804-d59-8504-4600-241d-3e69-ff0a-8316.ngrok-free.app/api/webhook/payment",
+      notification_url: `${process.env.NGROK_URL}/api/checkout/payment`,
       external_reference: dadosParaPagamento.ticketsIds.join(","),
     };
 
