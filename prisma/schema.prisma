@@ -38,7 +38,7 @@ model Usuario {
 // Tabela para os números da rifa comprados por um usuário
 model Ticket {
   id                Int      @id @default(autoincrement())
-  numero            Int
+  numero            String 
   status            String   @default("disponivel") // Ex: 'disponivel', 'reservado', 'pago'
   checkoutSessionId String?  // Para rastrear a compra no gateway
   createdAt         DateTime @default(now())

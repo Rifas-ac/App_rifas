@@ -1,73 +1,92 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
+import { randomUUID } from 'crypto';
+import { geradorDeNumeros } from '@/utils/geradorDeNumeros';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!
 });
+const payment = new Payment(client);
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { rifaId, numeros, comprador } = body;
+    const { rifaId, quantidade, comprador } = body;
 
-    if (!rifaId || !numeros || !comprador) {
+    if (!rifaId || !quantidade || !comprador) {
       return NextResponse.json({ message: 'Dados incompletos.' }, { status: 400 });
     }
 
+    const externalReference = randomUUID(); // Gera um ID único para a transação
+
+    // --- Ínicio da transação Prisma ---
     const dadosParaPagamento = await prisma.$transaction(async tx => {
-      const rifa = await tx.rifa.findUniqueOrThrow({ where: { id: rifaId } });
-      const ticketsSelecionados = await tx.ticket.findMany({
-        where: { rifaId: rifa.id, numero: { in: numeros } }
+      // 1. Busca a rifa e conta quantos tickets já foram vendidos/reservados
+      const rifa = await tx.rifa.findUniqueOrThrow({
+        where: { id: rifaId }
+      });
+      const ticketsVendidos = await tx.ticket.count({
+        where: { rifaId: rifa.id }
       });
 
-      const numerosIndisponiveis = ticketsSelecionados.filter(t => t.status !== 'disponivel');
-      if (numerosIndisponiveis.length > 0) {
-        throw new Error(
-          `Os seguintes números não estão mais disponíveis: ${numerosIndisponiveis.map(t => t.numero).join(', ')}`
-        );
+      // 2. Validação: Verifica se ainda há números disponíveis na rifa
+      if (ticketsVendidos + quantidade > rifa.totalNumeros) {
+        throw new Error('Quantidade de tickets solicitada excede o total disponível na rifa.');
       }
 
+      // 3. Gera números aleatórios únicos para esta compra
+      const novosNumeros = await geradorDeNumeros(tx, quantidade, rifaId);
+
+      // 4. Cria ou atualiza o comprador
       const usuario = await tx.usuario.upsert({
         where: { email: comprador.email },
         update: { nome: comprador.nome, telefone: comprador.telefone },
         create: { ...comprador }
       });
 
-      await tx.ticket.updateMany({
-        where: { id: { in: ticketsSelecionados.map(t => t.id) } },
-        data: { status: 'reservado', usuarioId: usuario.id }
+      // 5. Prepara os dados dos novos tickets para serem criados
+      const ticketsParaCriar = novosNumeros.map(numero => ({
+        numero: numero,
+        rifaId: rifa.id,
+        status: 'reservado',
+        usuarioId: usuario.id,
+        checkoutSessionId: externalReference // Associa o ID da sessão de checkout
+      }));
+
+      // 6.Cria os tickets no banco de dados
+      await tx.ticket.createMany({
+        data: ticketsParaCriar
       });
 
-      const valorTotal = ticketsSelecionados.length * rifa.valorCota;
+      // 7. Prepara os dados para o Mercado Pago
+      const valorTotal = quantidade * rifa.valorCota;
 
-      return { valorTotal, usuario, ticketsIds: ticketsSelecionados.map(t => t.id), rifa };
+      return { valorTotal, usuario, rifa };
     });
+    // --- Fim da transação Prisma ---
 
-    const payment = new Payment(client);
-
+    // 8. Cria o pagamento no Mercado Pago
     const paymentData = {
       transaction_amount: dadosParaPagamento.valorTotal,
-      description: `Tickets para a rifa: ${dadosParaPagamento.rifa.titulo}`,
+      description: `${quantidade} ticket(s) para a rifa: ${dadosParaPagamento.rifa.titulo}`,
       payment_method_id: 'pix',
       payer: {
         email: dadosParaPagamento.usuario.email,
         first_name: dadosParaPagamento.usuario.nome
       },
       notification_url: `${process.env.NGROK_URL}/api/webhook/payment`,
-      external_reference: dadosParaPagamento.ticketsIds.join(',')
+      external_reference: externalReference // Usamos o ID único gerado para rastrear a transação
     };
 
-    // Step 5: Fazer a requisição para criar o pagamento
     const result = await payment.create({ body: paymentData });
 
-    // Step 6: Atualizar nossos tickets com o ID do pagamento do Mercado Pago
+    // Atualiza o checkoutSessionId dos tickets criados com o ID real do pagamento do MP
     await prisma.ticket.updateMany({
-      where: { id: { in: dadosParaPagamento.ticketsIds } },
+      where: { checkoutSessionId: externalReference },
       data: { checkoutSessionId: String(result.id) }
     });
 
-    // Step 7: Retornar os dados do Pix para o Frontend
     return NextResponse.json(
       {
         paymentId: result.id,
@@ -77,10 +96,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Erro no checkout:', error);
-    if (error instanceof Error) {
-      return NextResponse.json({ message: error.message }, { status: 409 });
-    }
-    return NextResponse.json({ message: 'Erro interno do servidor.' }, { status: 500 });
+    console.error('Erro ao processar o checkout:', error);
+    return NextResponse.json({ message: 'Erro ao processar o checkout.' }, { status: 500 });
   }
 }
