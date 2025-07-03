@@ -1,23 +1,16 @@
-version: "3.8"
-
-# Define apenas o serviço do banco de dados
 services:
   db:
     image: postgres:15-alpine
     container_name: rifa_db
     restart: always
-    # Mapeia a porta 5432 do container para a porta 5432 da sua máquina (localhost)
     ports:
-      - "5432:5432"
-    # Variáveis de ambiente para criar o banco, usuário e senha
+      - '5432:5432'
     environment:
       POSTGRES_DB: rifa_db
       POSTGRES_USER: devuser
       POSTGRES_PASSWORD: devpassword
-    # Volume para garantir que os dados do banco não sejam perdidos
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-# Definição do volume nomeado
 volumes:
   postgres_data:
