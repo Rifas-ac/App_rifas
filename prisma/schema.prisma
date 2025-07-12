@@ -29,6 +29,8 @@ model Rifa {
 model Usuario {
   id        Int      @id @default(autoincrement())
   nome      String
+  sobrenome String?
+  cpf       String?   @unique // CPF deve ser único
   email     String   @unique // Email deve ser único
   telefone  String
   createdAt DateTime @default(now())
