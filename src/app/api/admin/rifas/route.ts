@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -14,12 +14,24 @@ export async function POST(request: Request) {
         premio,
         valorCota,
         totalNumeros,
-        dataSorteio: dataSorteio ? new Date(dataSorteio) : null,
-      },
+        dataSorteio: dataSorteio ? new Date(dataSorteio) : null
+      }
     });
     return NextResponse.json(rifa, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar rifa:", error);
-    return NextResponse.json({ error: "Erro ao criar rifa" }, { status: 500 });
+    console.error('Erro ao criar rifa:', error);
+    return NextResponse.json({ error: 'Erro ao criar rifa' }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    const rifas = await prisma.rifa.findMany({
+      orderBy: { dataSorteio: 'asc' }
+    });
+    return NextResponse.json(rifas, { status: 200 });
+  } catch (error) {
+    console.error('Erro ao buscar rifas:', error);
+    return NextResponse.json({ error: 'Erro ao buscar rifas' }, { status: 500 });
   }
 }
