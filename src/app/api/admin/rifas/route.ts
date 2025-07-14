@@ -23,15 +23,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro ao criar rifa' }, { status: 500 });
   }
 }
-
-export async function GET() {
-  try {
-    const rifas = await prisma.rifa.findMany({
-      orderBy: { dataSorteio: 'asc' }
-    });
-    return NextResponse.json(rifas, { status: 200 });
-  } catch (error) {
-    console.error('Erro ao buscar rifas:', error);
-    return NextResponse.json({ error: 'Erro ao buscar rifas' }, { status: 500 });
-  }
-}
