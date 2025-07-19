@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ShoppingCart, Minus, Plus, Trophy } from "lucide-react";
 import FormularioCheckout from "./FormularioCheckout";
+import QRCodeDisplay from "./QrCodeDisplay";
 
 interface RifaCardProps {
   rifa: {
