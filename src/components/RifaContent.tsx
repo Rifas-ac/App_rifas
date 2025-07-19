@@ -3,7 +3,7 @@ import RifaStatus from "./RifaStatus";
 import PromocaoCard from "./PromocaoCard";
 import QuantidadeSelector from "./QuantidadeSelector";
 import NumerosGerados from "./NumerosGerados";
-import BotaoParticipar from "./BotaoParticipar";
+import BotaoParticipar from "./emails/BotaoParticipar";
 import MensagemSucesso from "./MensagemSucesso";
 
 interface RifaContentProps {
