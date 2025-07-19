@@ -1,65 +1,87 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-
-// Inicializa o cliente do Mercado Pago com suas credenciais
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!
-});
-
-// Instancia o controlador de Pagamentos
-const payment = new Payment(client);
+import { Resend } from 'resend';
+import { ConfirmacaoCompraEmail } from '@/components/emails/ConfirmacaoCompraEmail';
 
 /**
- * Endpoint de Webhook para receber e processar notificações do Mercado Pago.
+ * Processa um pagamento aprovado: atualiza o banco e envia e-mail de confirmação.
+ * @param paymentDetails - O objeto de pagamento completo obtido do Mercado Pago.
+ */
+async function handleApprovedPayment(paymentDetails: any) {
+  const checkoutSessionId = String(paymentDetails.id);
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const { usuario, ticketsAtualizados } = await prisma.$transaction(async tx => {
+    const ticketsParaAtualizar = await tx.ticket.findMany({
+      where: { checkoutSessionId, status: 'reservado' },
+      include: { usuario: true, rifa: true }
+    });
+
+    if (ticketsParaAtualizar.length === 0 || !ticketsParaAtualizar[0].usuario) {
+      return { usuario: null, ticketsAtualizados: [] };
+    }
+
+    await tx.ticket.updateMany({
+      where: { id: { in: ticketsParaAtualizar.map(t => t.id) } },
+      data: { status: 'pago' }
+    });
+
+    return { usuario: ticketsParaAtualizar[0].usuario, ticketsAtualizados: ticketsParaAtualizar };
+  });
+
+  if (usuario && ticketsAtualizados.length > 0) {
+    try {
+      await resend.emails.send({
+        from: 'Rifas Online <onboarding@resend.dev>',
+        to: [usuario.email],
+        subject: `Confirmação de Compra - Rifa "${ticketsAtualizados[0].rifa.titulo}"`,
+        react: await ConfirmacaoCompraEmail({
+          nomeUsuario: usuario.nome,
+          numerosComprados: ticketsAtualizados.map(t => t.numero),
+          tituloRifa: ticketsAtualizados[0].rifa.titulo
+        })
+      });
+      console.log(`E-mail de confirmação enviado para ${usuario.email}.`);
+    } catch (emailError) {
+      // Se o envio do e-mail falhar, o pagamento já foi confirmado.
+      // É importante logar este erro para uma ação manual (ex: reenviar o e-mail).
+      console.error(`Pagamento ${checkoutSessionId} confirmado, mas falha ao enviar e-mail:`, emailError);
+    }
+  }
+}
+
+/**
+ * Endpoint de Webhook para notificações do Mercado Pago.
  */
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    console.log('Webhook recebido:', body);
+  const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN! });
+  const payment = new Payment(client);
 
-    // Verificamos se a notificação é sobre um pagamento
+  try {
+    // TODO: Em produção, validar a assinatura 'x-signature' do Mercado Pago para segurança.
+    const body = await request.json();
+
     if (body.type === 'payment') {
       const paymentId = body.data.id;
-
-      // 1. Busca os detalhes completos do pagamento no Mercado Pago
-      // Isso é uma medida de segurança para garantir que o status é oficial.
-      console.log(`Buscando detalhes do pagamento ID: ${paymentId}`);
       const paymentDetails = await payment.get({ id: paymentId });
-      console.log('Detalhes do pagamento obtidos:', paymentDetails);
 
-      // 2. Verifica se o pagamento foi realmente aprovado ('approved')
       if (paymentDetails.status === 'approved') {
-        const checkoutSessionId = String(paymentDetails.id);
-
-        console.log(`Pagamento ${checkoutSessionId} aprovado. Atualizando banco de dados...`);
-
-        // 3. Atualiza os tickets no nosso banco de dados
-        // Encontramos os tickets que foram reservados com este ID de pagamento
-        // e mudamos o status para 'pago'.
-        const updatedTickets = await prisma.ticket.updateMany({
-          where: {
-            checkoutSessionId: checkoutSessionId,
-            status: 'reservado' // Garante que só atualizemos tickets que estavam aguardando
-          },
-          data: {
-            status: 'pago'
-          }
-        });
-
-        console.log(`${updatedTickets.count} tickets foram atualizados para 'pago'.`);
-        // Lógicas futuras:
-        // - Enviar um e-mail de confirmação para o comprador.
-        // - Notificar um administrador.
-      } else {
-        console.log(`Status do pagamento ${paymentDetails.id} é '${paymentDetails.status}'. Nenhuma ação necessária.`);
+        switch (paymentDetails.payment_type_id) {
+          case 'credit_card':
+          case 'account_money': // PIX ou Saldo em Conta
+          case 'ticket': // Boleto
+            await handleApprovedPayment(paymentDetails);
+            break;
+          default:
+            break;
+        }
       }
     }
 
-    // 4. Responde 200 OK para o Mercado Pago para confirmar o recebimento
     return NextResponse.json({ status: 'ok' }, { status: 200 });
   } catch (error) {
-    console.error('Erro ao processar webhook do Mercado Pago:', error);
-    return NextResponse.json({ status: 'error', message: 'Erro interno do servidor' }, { status: 500 });
+    console.error('Erro no processamento do webhook:', error);
+    return NextResponse.json({ status: 'error', message: 'Erro interno' }, { status: 500 });
   }
 }

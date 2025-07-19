@@ -4,99 +4,116 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { randomUUID } from 'crypto';
 import { geradorDeNumeros } from '@/utils/geradorDeNumeros';
 
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!
-});
-const payment = new Payment(client);
-
 export async function POST(request: Request) {
+  const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN! });
+  const payment = new Payment(client);
+
   try {
     const body = await request.json();
-    const { rifaId, quantidade, comprador } = body;
+    const { rifaId, quantidade, comprador, paymentData } = body;
 
     if (!rifaId || !quantidade || !comprador) {
-      return NextResponse.json({ message: 'Dados incompletos.' }, { status: 400 });
+      return NextResponse.json({ message: 'Dados da rifa ou do comprador estão incompletos.' }, { status: 400 });
     }
 
-    const externalReference = randomUUID(); // Gera um ID único para a transação
+    const externalReference = randomUUID();
 
-    // --- Ínicio da transação Prisma ---
+    // Transação para garantir que a reserva dos tickets seja atômica.
     const dadosParaPagamento = await prisma.$transaction(async tx => {
-      // 1. Busca a rifa e conta quantos tickets já foram vendidos/reservados
-      const rifa = await tx.rifa.findUniqueOrThrow({
-        where: { id: rifaId }
-      });
-      const ticketsVendidos = await tx.ticket.count({
-        where: { rifaId: rifa.id }
-      });
+      const rifa = await tx.rifa.findUniqueOrThrow({ where: { id: rifaId } });
+      const ticketsVendidos = await tx.ticket.count({ where: { rifaId: rifa.id } });
 
-      // 2. Validação: Verifica se ainda há números disponíveis na rifa
       if (ticketsVendidos + quantidade > rifa.totalNumeros) {
-        throw new Error('Quantidade de tickets solicitada excede o total disponível na rifa.');
+        throw new Error(`Não há números suficientes. Restam: ${rifa.totalNumeros - ticketsVendidos}`);
       }
 
-      // 3. Gera números aleatórios únicos para esta compra
-      const novosNumeros = await geradorDeNumeros(tx, quantidade, rifaId);
+      const novosNumeros = await geradorDeNumeros(tx, quantidade, rifa.id);
 
-      // 4. Cria ou atualiza o comprador
+      // Salva ou atualiza o usuário com todos os dados fornecidos.
       const usuario = await tx.usuario.upsert({
         where: { email: comprador.email },
-        update: { nome: comprador.nome, telefone: comprador.telefone },
-        create: { ...comprador }
+        update: {
+          nome: comprador.nome,
+          sobrenome: comprador.sobrenome,
+          cpf: comprador.cpf,
+          telefone: comprador.telefone || 'N/A'
+        },
+        create: { ...comprador, telefone: comprador.telefone || 'N/A' }
       });
 
-      // 5. Prepara os dados dos novos tickets para serem criados
       const ticketsParaCriar = novosNumeros.map(numero => ({
-        numero: numero,
-        rifaId: rifa.id,
+        numero,
+        rifaId,
         status: 'reservado',
         usuarioId: usuario.id,
-        checkoutSessionId: externalReference // Associa o ID da sessão de checkout
+        checkoutSessionId: externalReference
       }));
 
-      // 6.Cria os tickets no banco de dados
-      await tx.ticket.createMany({
-        data: ticketsParaCriar
-      });
+      await tx.ticket.createMany({ data: ticketsParaCriar });
 
-      // 7. Prepara os dados para o Mercado Pago
       const valorTotal = quantidade * rifa.valorCota;
-
-      return { valorTotal, usuario, rifa };
+      return { valorTotal, usuario, rifa, externalReference };
     });
-    // --- Fim da transação Prisma ---
 
-    // 8. Cria o pagamento no Mercado Pago
-    const paymentData = {
-      transaction_amount: dadosParaPagamento.valorTotal,
-      description: `${quantidade} ticket(s) para a rifa: ${dadosParaPagamento.rifa.titulo}`,
-      payment_method_id: 'pix',
-      payer: {
-        email: dadosParaPagamento.usuario.email,
-        first_name: dadosParaPagamento.usuario.nome
-      },
-      notification_url: `${process.env.NGROK_URL}/api/webhook/payment`,
-      external_reference: externalReference // Usamos o ID único gerado para rastrear a transação
-    };
+    let paymentRequestBody;
+    const notification_url = `${process.env.NEXT_PUBLIC_API_URL}/api/webhook/payment`;
 
-    const result = await payment.create({ body: paymentData });
+    // Lógica condicional para montar o corpo do pagamento
+    if (paymentData && paymentData.token) {
+      // Caso: Pagamento com Cartão de Crédito
+      paymentRequestBody = {
+        transaction_amount: Number(dadosParaPagamento.valorTotal.toFixed(2)),
+        token: paymentData.token,
+        description: `${quantidade} ticket(s) para a rifa: ${dadosParaPagamento.rifa.titulo}`,
+        installments: paymentData.installments,
+        payment_method_id: paymentData.payment_method_id,
+        issuer_id: paymentData.issuer_id,
+        payer: {
+          email: comprador.email,
+          first_name: comprador.nome,
+          last_name: comprador.sobrenome,
+          identification: { type: 'CPF', number: comprador.cpf }
+        },
+        notification_url,
+        external_reference: dadosParaPagamento.externalReference
+      };
+    } else {
+      // Caso: Pagamento com PIX
+      paymentRequestBody = {
+        transaction_amount: Number(dadosParaPagamento.valorTotal.toFixed(2)),
+        description: `${quantidade} ticket(s) para a rifa: ${dadosParaPagamento.rifa.titulo}`,
+        payment_method_id: 'pix',
+        payer: {
+          email: comprador.email,
+          first_name: comprador.nome,
+          last_name: comprador.sobrenome,
+          identification: { type: 'CPF', number: comprador.cpf }
+        },
+        notification_url,
+        external_reference: dadosParaPagamento.externalReference
+      };
+    }
 
-    // Atualiza o checkoutSessionId dos tickets criados com o ID real do pagamento do MP
+    const result = await payment.create({ body: paymentRequestBody });
+
     await prisma.ticket.updateMany({
-      where: { checkoutSessionId: externalReference },
+      where: { checkoutSessionId: dadosParaPagamento.externalReference },
       data: { checkoutSessionId: String(result.id) }
     });
 
     return NextResponse.json(
       {
         paymentId: result.id,
+        status: result.status,
+        detail: result.status_detail,
         qrCode: result.point_of_interaction?.transaction_data?.qr_code,
         qrCodeBase64: result.point_of_interaction?.transaction_data?.qr_code_base64
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error('Erro ao processar o checkout:', error);
-    return NextResponse.json({ message: 'Erro ao processar o checkout.' }, { status: 500 });
+  } catch (error: any) {
+    const errorMessage = error.cause?.message || error.message || 'Erro desconhecido.';
+    console.error('Erro Detalhado no Checkout:', JSON.stringify(error, null, 2));
+    return NextResponse.json({ message: `Falha ao criar pagamento: ${errorMessage}` }, { status: 500 });
   }
 }
