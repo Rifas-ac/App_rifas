@@ -63,15 +63,18 @@ export default function RifaAtivaPage() {
         </div>
 
         <RifaCard
-          quantidade={quantidade}
-          setQuantidade={setQuantidade}
-          showNumbers={showNumbers}
-          numerosGerados={numerosGerados}
-          isProcessing={isProcessing}
-          showSuccess={showSuccess}
-          valorTotal={valorTotal}
-          onParticipate={handleParticipate}
-          onReset={resetCompra}
+          rifa={{
+            id: "rifa-ativa-001",
+            titulo: "Rifa Ativa - Prêmio Especial",
+            descricao: "Participe da nossa rifa ativa e concorra a prêmios incríveis!",
+            valorNumero: valorUnitario,
+            dataEncerramento: "2024-12-31",
+          }}
+          usuario={{
+            id: "user-001",
+            nome: "Usuário",
+            email: "usuario@email.com",
+          }}
         />
       </div>
     </div>
