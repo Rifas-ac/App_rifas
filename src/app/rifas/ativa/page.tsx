@@ -51,6 +51,11 @@ export default function RifaAtivaPage() {
     setQuantidade(3);
   };
 
+  // Nova função para aplicar a promoção
+  const handlePromocaoClick = () => {
+    setQuantidade(10);
+  };
+
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-md mx-auto">
@@ -63,18 +68,16 @@ export default function RifaAtivaPage() {
         </div>
 
         <RifaCard
-          rifa={{
-            id: "rifa-ativa-001",
-            titulo: "Rifa Ativa - Prêmio Especial",
-            descricao: "Participe da nossa rifa ativa e concorra a prêmios incríveis!",
-            valorNumero: valorUnitario,
-            dataEncerramento: "2024-12-31",
-          }}
-          usuario={{
-            id: "user-001",
-            nome: "Usuário",
-            email: "usuario@email.com",
-          }}
+          quantidade={quantidade}
+          setQuantidade={setQuantidade}
+          showNumbers={showNumbers}
+          numerosGerados={numerosGerados}
+          isProcessing={isProcessing}
+          showSuccess={showSuccess}
+          valorTotal={valorTotal}
+          onParticipate={handleParticipate}
+          onReset={resetCompra}
+          onPromocaoClick={handlePromocaoClick}
         />
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
+import Image from "next/image"; // Importar o componente Image do Next.js
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
 
 export default function Home() {
@@ -30,6 +31,11 @@ export default function Home() {
     alert(`Compra realizada! Números gerados: ${numerosGerados.join(", ")}`);
   };
 
+  // Nova função para aplicar a promoção
+  const handlePromocaoClick = () => {
+    setQuantidade(10);
+  };
+
   // RENDERIZAÇÃO DA PÁGINA PRINCIPAL
 
   return (
@@ -43,18 +49,17 @@ export default function Home() {
           {/* SEÇÃO DA IMAGEM DO PRÊMIO */}
 
           <div className="relative">
-            {/* Container da imagem do prêmio (Mercedes AMG C300) */}
-            <div className="w-full h-48 bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center">
-              <div className="text-center text-white">
-                {/* Emoji representando o carro */}
-                <div className="text-4xl mb-2">🏎️</div>
-                {/* Nome do prêmio */}
-                <div className="text-lg font-bold">
-                  Gol LS 1986 motor AP 1.6 álcool, carro de coleção placa preta. Raridade interior monocromático.
-                </div>
-                {/* Texto indicativo */}
-                <div className="text-sm opacity-75">Imagem do prêmio</div>
-              </div>
+            {/* Container da imagem do prêmio (Gol LS 1986) */}
+            <div className="w-full h-48 relative">
+              {" "}
+              {/* Adicionado relative para posicionar a imagem */}
+              <Image
+                src="/images/rifa-gol/gol-0.jpeg" // Caminho da imagem na pasta public
+                alt="Gol LS 1986 motor AP 1.6 álcool, carro de coleção placa preta."
+                layout="fill" // Faz a imagem preencher o container
+                objectFit="cover" // Garante que a imagem cubra o espaço sem distorcer
+                className="rounded-t-2xl" // Arredonda os cantos superiores
+              />
             </div>
 
             {/* Overlay gradiente sobre a imagem */}
@@ -99,8 +104,12 @@ export default function Home() {
                 {/* Texto explicativo */}
                 <span className="text-sm text-gray-300">Compre mais barato!</span>
               </div>
-              {/* Destaque da promoção */}
-              <div className="bg-green-500 text-white text-center py-3 rounded-lg font-bold">10 por R$ 37,90</div>
+              {/* Botão da promoção - agora clicável */}
+              <button
+                onClick={handlePromocaoClick}
+                className="w-full bg-green-500 hover:bg-green-600 text-white text-center py-3 rounded-lg font-bold transition-all duration-200 hover:scale-105 active:scale-95">
+                10 por R$ 37,90
+              </button>
             </div>
 
             {/* SEÇÃO DE SELEÇÃO DE QUANTIDADE */}

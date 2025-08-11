@@ -7,7 +7,7 @@ interface ConfirmacaoCompraEmailProps {
 export const ConfirmacaoCompraEmail: React.FC<Readonly<ConfirmacaoCompraEmailProps>> = ({
   nomeUsuario,
   numerosComprados,
-  tituloRifa
+  tituloRifa,
 }) => (
   <div>
     <h1>Olá, {nomeUsuario}! 👋</h1>
@@ -18,17 +18,17 @@ export const ConfirmacaoCompraEmail: React.FC<Readonly<ConfirmacaoCompraEmailPro
     <p>Estes são os seus números da sorte:</p>
     <div
       style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-        padding: '16px',
-        border: '1px solid #ccc',
-        borderRadius: '8px'
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "8px",
+        padding: "16px",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
       }}>
-      {numerosComprados.map(numero => (
+      {numerosComprados.map((numero) => (
         <span
           key={numero}
-          style={{ padding: '8px 12px', backgroundColor: '#f0f0f0', borderRadius: '4px', fontWeight: 'bold' }}>
+          style={{ padding: "8px 12px", backgroundColor: "#f0f0f0", borderRadius: "4px", fontWeight: "bold" }}>
           {numero}
         </span>
       ))}

@@ -16,6 +16,7 @@ interface RifaContentProps {
   valorTotal: number;
   onParticipate: () => void;
   onReset: () => void;
+  onPromocaoClick: () => void; // Nova prop
 }
 
 const RifaContent: React.FC<RifaContentProps> = ({
@@ -28,13 +29,14 @@ const RifaContent: React.FC<RifaContentProps> = ({
   valorTotal,
   onParticipate,
   onReset,
+  onPromocaoClick, // Nova prop
 }) => {
   return (
     <>
       <RifaStatus showSuccess={showSuccess} />
 
       <div className="p-4 space-y-4">
-        <PromocaoCard />
+        <PromocaoCard onPromocaoClick={onPromocaoClick} />
 
         {!showNumbers && <QuantidadeSelector quantidade={quantidade} setQuantidade={setQuantidade} />}
 
