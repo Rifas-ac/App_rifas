@@ -54,7 +54,7 @@ export default function Home() {
               {" "}
               {/* Adicionado relative para posicionar a imagem */}
               <Image
-                src="/images/rifa-gol/gol-0.jpeg" // Caminho da imagem na pasta public
+                src="/rifa-gol/gol-0.png" // Caminho da imagem na pasta public
                 alt="Gol LS 1986 motor AP 1.6 álcool, carro de coleção placa preta."
                 layout="fill" // Faz a imagem preencher o container
                 objectFit="cover" // Garante que a imagem cubra o espaço sem distorcer

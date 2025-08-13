@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -31,19 +31,7 @@ export const metadata: Metadata = {
     title: "AMG Power - Rifa Mercedes C300",
     description: "Participe da rifa e concorra a uma Mercedes AMG C300. Números a partir de R$ 3,99!",
   },
-
-  // Configurações do viewport para responsividade
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
-
-  // Configurações de tema para dispositivos móveis
-  themeColor: "#f97316",
-
   // Configurações para PWA (Progressive Web App)
-  manifest: "/manifest.json",
 
   // Configurações de ícones
   icons: {
@@ -51,6 +39,13 @@ export const metadata: Metadata = {
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
+};
+
+export const viewPort: Viewport = {
+  themeColor: "#f97316",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 // COMPONENTE DE LAYOUT RAIZ
 export default function RootLayout({ children }: { children: React.ReactNode }) {

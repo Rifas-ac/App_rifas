@@ -1,5 +1,6 @@
 @import "tailwindcss/preflight";
-@tailwind utilities;
+@import "tailwindcss/utilities";
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -38,12 +39,13 @@
 
   /* Regra global para bordas e outlines, comum em setups Shadcn/ui */
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   /* Estilos base para o corpo da página, usando as variáveis de tema */
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
