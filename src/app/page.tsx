@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Image from "next/image"; // Importar o componente Image do Next.js
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
+import CarrosselGol from "@/components/CarrosselGol";
 
 export default function Home() {
   // Estado para controlar a quantidade de números selecionados
@@ -46,21 +47,10 @@ export default function Home() {
         {/* CARD PRINCIPAL DA RIFA */}
 
         <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-2xl">
-          {/* SEÇÃO DA IMAGEM DO PRÊMIO */}
-
+          {/* SEÇÃO DA IMAGEM DO PRÊMIO - SUBSTITUA PELA DO CARROSSEL */}
           <div className="relative">
-            {/* Container da imagem do prêmio (Gol LS 1986) */}
-            <div className="w-full h-48 relative">
-              {" "}
-              {/* Adicionado relative para posicionar a imagem */}
-              <Image
-                src="/rifa-gol/gol-0.png" // Caminho da imagem na pasta public
-                alt="Gol LS 1986 motor AP 1.6 álcool, carro de coleção placa preta."
-                layout="fill" // Faz a imagem preencher o container
-                objectFit="cover" // Garante que a imagem cubra o espaço sem distorcer
-                className="rounded-t-2xl" // Arredonda os cantos superiores
-              />
-            </div>
+            {/* Carrossel de imagens do Gol */}
+            <CarrosselGol />
 
             {/* Overlay gradiente sobre a imagem */}
             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent" />

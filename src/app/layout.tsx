@@ -50,27 +50,25 @@ export const viewPort: Viewport = {
 // COMPONENTE DE LAYOUT RAIZ
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <head>
-        {/* Meta tags adicionais que podem ser necessárias */}
-        <meta charSet="utf-8" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-        {/* Preconnect para otimização de carregamento */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-
-        {/* DNS prefetch para melhor performance */}
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-      </head>
-
-      {/* CORPO DA PÁGINA (BODY) */}
+    <html lang="pt-br">
       <body className={inter.className}>
         <div className="min-h-screen">{children}</div>
       </body>
     </html>
   );
 }
+
+const carros = [
+  { id: 1, nome: "Gol 1", imagem: "/rifa-gol/gol-1.png" },
+  { id: 2, nome: "Gol 2", imagem: "/rifa-gol/gol-2.png" },
+  { id: 3, nome: "Gol 3", imagem: "/rifa-gol/gol-3.png" },
+  { id: 4, nome: "Gol 4", imagem: "/rifa-gol/gol-4.png" },
+  { id: 5, nome: "Gol 5", imagem: "/rifa-gol/gol-5.png" },
+  { id: 6, nome: "Gol 6", imagem: "/rifa-gol/gol-6.png" },
+  { id: 7, nome: "Gol 7", imagem: "/rifa-gol/gol-7.png" },
+  { id: 8, nome: "Gol 8", imagem: "/rifa-gol/gol-8.png" },
+  { id: 9, nome: "Gol 9", imagem: "/rifa-gol/gol-9.png" },
+  { id: 10, nome: "Gol 10", imagem: "/rifa-gol/gol-10.png" },
+  { id: 11, nome: "Gol 11", imagem: "/rifa-gol/gol-11.png" },
+  { id: 12, nome: "Gol 12", imagem: "/rifa-gol/gol-12.png" },
+];

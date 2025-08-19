@@ -7,16 +7,19 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCallback, useEffect, useState, useRef } from "react";
 
 const images = [
-  "/images/rifa-gol/gol-0.jpeg",
-  "/images/rifa-gol/gol-2.jpeg",
-  "/images/rifa-gol/gol-3.jpeg",
-  "/images/rifa-gol/gol-4.jpeg",
-  "/images/rifa-gol/gol-5.jpeg", // Nova imagem
-  "/images/rifa-gol/gol-6.jpeg", // Nova imagem
-  "/images/rifa-gol/gol-7.jpeg", // Nova imagem
-  "/images/rifa-gol/gol-8.jpeg",
-  "/images/rifa-gol/gol-9.jpeg", // Nova imagem
-  "/images/rifa-gol/gol-11.jpeg",
+  "/rifa-gol/gol-0.png",
+  "/rifa-gol/gol-1.png",
+  "/rifa-gol/gol-2.png",
+  "/rifa-gol/gol-3.png",
+  "/rifa-gol/gol-4.png",
+  "/rifa-gol/gol-5.png",
+  "/rifa-gol/gol-6.png",
+  "/rifa-gol/gol-7.png",
+  "/rifa-gol/gol-8.png",
+  "/rifa-gol/gol-9.png",
+  "/rifa-gol/gol-10.png",
+  "/rifa-gol/gol-11.png",
+  "/rifa-gol/gol-12.png",
 ];
 
 const RifaHeader: React.FC = () => {
