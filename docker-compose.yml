@@ -4,13 +4,17 @@ services:
     container_name: rifa_db
     restart: always
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
       POSTGRES_DB: rifa_db
       POSTGRES_USER: devuser
       POSTGRES_PASSWORD: devpassword
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  app:
+    build: .
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
