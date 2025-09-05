@@ -56,6 +56,20 @@ export default function ClientePage() {
     }
   }
 
+  async function handleCadastro(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    const form = new FormData(e.currentTarget);
+    // Pegue os campos necessários
+    const nome = form.get("nome");
+    const email = form.get("email");
+    const senha = form.get("senha");
+    const cpf = form.get("cpf");
+    const telefone = form.get("telefone");
+    // Faça o fetch para /api/cadastro
+    // ...
+  }
+
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCPF(e.target.value);
     setCpf(formatted);
@@ -70,7 +84,7 @@ export default function ClientePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl p-8">
         <h2 className="text-2xl font-bold text-white mb-6">{isLogin ? "Entrar na Conta" : "Cadastro de Cliente"}</h2>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={isLogin ? handleLogin : handleCadastro}>
           {!isLogin && (
             <input type="text" placeholder="Nome" className="mb-4 w-full p-2 rounded bg-gray-700 text-white" required />
           )}
@@ -78,7 +92,7 @@ export default function ClientePage() {
             type="email"
             name="email"
             required
-            pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|br|net|org|hotmail)$"
+            pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
             placeholder="E-mail"
             className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
           />
