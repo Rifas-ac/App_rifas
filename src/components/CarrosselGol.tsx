@@ -2,7 +2,7 @@
 import useEmblaCarousel from "embla-carousel-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import AvatarMenu from "./AvatarMenu"; // Importando o AvatarMenu
 
 const carros = [
   { id: 0, nome: "Gol 0", imagem: "/rifa-gol/gol-0.png" },
@@ -21,35 +21,9 @@ const carros = [
 ];
 
 export default function CarrosselGol() {
-  const router = useRouter();
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-
-  // Estado para saber se está logado
-  const [usuarioLogado, setUsuarioLogado] = useState(false);
-
-  useEffect(() => {
-    // Exemplo: verifica se existe um token no localStorage
-    setUsuarioLogado(!!localStorage.getItem("usuarioLogado"));
-  }, []);
-
-  useEffect(() => {
-    if (emblaApi) emblaApi.scrollTo(0);
-  }, [emblaApi]);
-
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Sempre começa na imagem zero
-  useEffect(() => {
-    if (emblaApi) {
-      emblaApi.scrollTo(0);
-      setSelectedIndex(0);
-      emblaApi.on("select", () => {
-        setSelectedIndex(emblaApi.selectedScrollSnap());
-      });
-    }
-  }, [emblaApi]);
-
-  // Passa automaticamente a cada 5 segundos
   useEffect(() => {
     if (!emblaApi) return;
     const interval = setInterval(() => {
@@ -63,6 +37,11 @@ export default function CarrosselGol() {
 
   return (
     <div className="relative w-full max-w-lg mx-auto h-64">
+      {/* AvatarMenu posicionado dentro do carrossel */}
+      <div className="absolute top-4 left-4 z-20">
+        <AvatarMenu />
+      </div>
+
       {/* Carrossel */}
       <div className="overflow-hidden rounded-t-2xl h-64" ref={emblaRef}>
         <div className="embla__container flex flex-row h-64">
@@ -88,7 +67,7 @@ export default function CarrosselGol() {
         type="button">
         ▶
       </button>
-      {/* Bolinhas de navegação - menores e mais embaixo */}
+      {/* Bolinhas de navegação */}
       <div className="absolute bottom-2 left-0 right-0 flex justify-center items-center gap-1 z-10">
         {carros.map((_, idx) => (
           <span
@@ -103,6 +82,3 @@ export default function CarrosselGol() {
     </div>
   );
 }
-
-// Instalação da dependência necessária
-// npm install embla-carousel-react

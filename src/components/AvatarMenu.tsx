@@ -49,7 +49,7 @@ export default function AvatarMenu() {
     </span>
   );
 
-    async function handleLoginSubmit(e: React.FormEvent) {
+  async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(""); // Clear previous errors
 
@@ -135,7 +135,8 @@ export default function AvatarMenu() {
         {avatarIcon}
       </button>
       {open && (
-        <div className="absolute left-0 mt-2 bg-gray-800 rounded shadow-lg p-4 z-10 min-w-[200px]">
+        // A MUDANÇA FOI FEITA AQUI: A largura agora é 'w-80' (320px)
+        <div className="absolute left-0 mt-2 bg-gray-800 rounded shadow-lg p-4 z-10 w-80">
           {/* Não logado */}
           {!userType && !showLogin && !showCadastro && (
             <>
