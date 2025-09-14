@@ -1,19 +1,43 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import {
+  obterMensagemErroCPF,
+  obterMensagemErroEmail,
+  obterMensagemErroTelefone,
+  formatarCPF,
+  formatarTelefone,
+} from "../utils/validacoes";
 
 // Dados do admin fixos
 const ADMIN_EMAIL = "calebexmz9@gmail.com";
-const ADMIN_SENHA = "8822Bem!";
+const ADMIN_SENHA = "88224646Ba!";
 
 export default function AvatarMenu() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showCadastro, setShowCadastro] = useState(false);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [nome, setNome] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [error, setError] = useState("");
-  const [userType, setUserType] = useState(typeof window !== "undefined" ? localStorage.getItem("userType") : null);
+  const [errors, setErrors] = useState({
+    email: "",
+    cpf: "",
+    telefone: "",
+  });
+  const [userType, setUserType] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userTypeFromCookie = Cookies.get("userType");
+    if (userTypeFromCookie) {
+      setUserType(userTypeFromCookie);
+    }
+  }, []);
 
   // Cores da bolinha conforme tipo de usuário
   const color = userType === "admin" ? "bg-orange-500" : userType === "comprador" ? "bg-green-500" : "bg-blue-500";
@@ -28,14 +52,16 @@ export default function AvatarMenu() {
   function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (email === ADMIN_EMAIL && senha === ADMIN_SENHA) {
-      localStorage.setItem("userType", "admin");
+      Cookies.set("userType", "admin");
+      Cookies.set("userEmail", email);
       setUserType("admin");
       setShowLogin(false);
       setOpen(false);
       setError("");
       window.location.reload();
     } else if (email && senha) {
-      localStorage.setItem("userType", "comprador");
+      Cookies.set("userType", "comprador");
+      Cookies.set("userEmail", email);
       setUserType("comprador");
       setShowLogin(false);
       setOpen(false);
@@ -46,8 +72,35 @@ export default function AvatarMenu() {
     }
   }
 
+  function handleCadastroSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const emailError = obterMensagemErroEmail(email);
+    const cpfError = obterMensagemErroCPF(cpf);
+    const telefoneError = obterMensagemErroTelefone(telefone);
+
+    if (emailError || cpfError || telefoneError) {
+      setErrors({
+        email: emailError || "",
+        cpf: cpfError || "",
+        telefone: telefoneError || "",
+      });
+      return;
+    }
+
+    // Simulação de cadastro
+    alert("Cadastro realizado com sucesso! (simulação)");
+    Cookies.set("userType", "comprador");
+    Cookies.set("userEmail", email);
+    setUserType("comprador");
+    setShowCadastro(false);
+    setOpen(false);
+    setError("");
+    window.location.reload();
+  }
+
   function handleLogout() {
-    localStorage.removeItem("userType");
+    Cookies.remove("userType");
+    Cookies.remove("userEmail");
     setUserType(null);
     setOpen(false);
     window.location.reload();
@@ -112,22 +165,54 @@ export default function AvatarMenu() {
             </form>
           )}
 
-          {/* Formulário de cadastro (simulação) */}
+          {/* Formulário de cadastro */}
           {showCadastro && (
-            <form className="space-y-2">
-              <input type="text" placeholder="Nome" className="w-full p-2 rounded bg-gray-700 text-white" required />
-              <input type="email" placeholder="E-mail" className="w-full p-2 rounded bg-gray-700 text-white" required />
+            <form onSubmit={handleCadastroSubmit} className="space-y-2">
+              <input
+                type="text"
+                placeholder="Nome"
+                className="w-full p-2 rounded bg-gray-700 text-white"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+              />
+              <input
+                type="email"
+                placeholder="E-mail"
+                className="w-full p-2 rounded bg-gray-700 text-white"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              {errors.email && <div className="text-red-500 text-sm">{errors.email}</div>}
+              <input
+                type="text"
+                placeholder="CPF"
+                className="w-full p-2 rounded bg-gray-700 text-white"
+                value={cpf}
+                onChange={(e) => setCpf(formatarCPF(e.target.value))}
+                required
+              />
+              {errors.cpf && <div className="text-red-500 text-sm">{errors.cpf}</div>}
+              <input
+                type="text"
+                placeholder="Telefone"
+                className="w-full p-2 rounded bg-gray-700 text-white"
+                value={telefone}
+                onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
+                required
+              />
+              {errors.telefone && <div className="text-red-500 text-sm">{errors.telefone}</div>}
               <input
                 type="password"
                 placeholder="Senha"
                 className="w-full p-2 rounded bg-gray-700 text-white"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
                 required
               />
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="w-full bg-green-500 text-white py-2 rounded font-bold"
-                  onClick={() => alert("Cadastro realizado (simulação)")}>
+                <button type="submit" className="w-full bg-green-500 text-white py-2 rounded font-bold">
                   Cadastrar
                 </button>
                 <button
@@ -146,12 +231,12 @@ export default function AvatarMenu() {
               <div className="mb-2 text-green-400 font-bold">Comprador</div>
               <button
                 className="w-full text-left py-2 px-2 rounded hover:bg-gray-700 text-white"
-                onClick={() => alert("Meu Perfil")}>
+                onClick={() => router.push("/cliente")}>
                 Meu Perfil
               </button>
               <button
                 className="w-full text-left py-2 px-2 rounded hover:bg-gray-700 text-white"
-                onClick={() => alert("Status: Ativo")}>
+                onClick={() => router.push("/cliente/status")}>
                 Status
               </button>
               <button
@@ -177,7 +262,7 @@ export default function AvatarMenu() {
               </div>
               <button
                 className="w-full text-left py-2 px-2 rounded hover:bg-gray-700 text-white"
-                onClick={() => alert("Área do Administrador")}>
+                onClick={() => router.push("/adm")}>
                 Área do Administrador
               </button>
               <button

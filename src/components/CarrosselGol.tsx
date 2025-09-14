@@ -63,21 +63,6 @@ export default function CarrosselGol() {
 
   return (
     <div className="relative w-full max-w-lg mx-auto h-64">
-      {/* Bolinha de cadastro/login no canto superior esquerdo */}
-      <button
-        className={`absolute top-4 left-4 ${
-          usuarioLogado ? "bg-green-600" : "bg-blue-600"
-        } text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg z-20`}
-        onClick={() => router.push("/cliente")}
-        title="Cadastro/Login"
-        type="button"
-      >
-        {/* Ícone de usuário */}
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-          <circle cx="12" cy="8" r="4" fill="white" />
-          <rect x="6" y="16" width="12" height="4" rx="2" fill="white" />
-        </svg>
-      </button>
       {/* Carrossel */}
       <div className="overflow-hidden rounded-t-2xl h-64" ref={emblaRef}>
         <div className="embla__container flex flex-row h-64">
