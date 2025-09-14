@@ -19,7 +19,7 @@ interface RifaData {
 }
 
 async function getAdminRifaData(): Promise<RifaData | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const userType = cookieStore.get("userType");
 
   if (userType?.value !== "admin") {
