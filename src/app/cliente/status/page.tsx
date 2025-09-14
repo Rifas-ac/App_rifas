@@ -1,20 +1,25 @@
 import { cookies } from "next/headers";
 
 async function getTickets() {
-  const userCookie = cookies().get("userEmail");
+  const cookieStore = await cookies();
+  const userCookie = cookieStore.get("userEmail");
   const userEmail = userCookie ? userCookie.value : null;
 
   if (!userEmail) {
-    // Handle the case where the user is not logged in
+    // Lida com o caso de o usuário não estar logado
     return [];
   }
 
-  // In a real application, you would fetch from a real API endpoint
-  const res = await fetch(`http://localhost:3000/api/cliente/tickets?user=${userEmail}`);
+  // Constrói a URL base de forma dinâmica para funcionar em dev e prod
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
+  
+  const res = await fetch(`${baseUrl}/api/cliente/tickets?user=${userEmail}`);
 
   if (!res.ok) {
-    // Handle the error case
-    console.error("Failed to fetch tickets");
+    // Lida com o caso de erro na busca
+    console.error("Falha ao buscar os tickets");
     return [];
   }
 
@@ -38,8 +43,8 @@ export default async function StatusPage() {
           </thead>
           <tbody>
             {tickets.length > 0 ? (
-              tickets.map((ticket, index) => (
-                <tr key={index}>
+              tickets.map((ticket: { rifa: { id: number; nome: string }; numeros: string[] }) => (
+                <tr key={ticket.rifa.id}>
                   <td className="border px-4 py-2">{ticket.rifa.nome}</td>
                   <td className="border px-4 py-2">{ticket.numeros.join(", ")}</td>
                 </tr>
