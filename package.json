@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx prisma generate && npx prisma migrate deploy && next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "npx prisma db push"
@@ -44,6 +44,6 @@
     "typescript": "^5"
   },
   "env": {
-    "DATABASE_URL": "postgresql://devuser:devpassword@db:5432/rifa_db?schema=public"
+    "DATABASE_URL": "postgresql://postgres.uowywztrncfzzrvgwees:88224646Ba@aws-1-sa-east-1.pooler.supabase.com:6543/postgres"
   }
 }
