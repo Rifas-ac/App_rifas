@@ -49,31 +49,47 @@ export default function AvatarMenu() {
     </span>
   );
 
-  function handleLoginSubmit(e: React.FormEvent) {
+    async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(""); // Clear previous errors
+
+    // Try admin login first
     if (email === ADMIN_EMAIL && senha === ADMIN_SENHA) {
       Cookies.set("userType", "admin");
       Cookies.set("userEmail", email);
       setUserType("admin");
       setShowLogin(false);
       setOpen(false);
-      setError("");
       window.location.reload();
-    } else {
-      // If not admin, then try to log in as comprador (simulated)
-      // Here you would typically make an API call to validate comprador credentials
-      // For now, it's a client-side simulation
-      if (email && senha) {
+      return;
+    }
+
+    // If not admin, try regular user login via API
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      if (response.ok) {
+        // Login successful
         Cookies.set("userType", "comprador");
         Cookies.set("userEmail", email);
         setUserType("comprador");
         setShowLogin(false);
         setOpen(false);
-        setError("");
         window.location.reload();
       } else {
-        setError("Preencha todos os campos!");
+        // Login failed
+        const errorData = await response.json();
+        setError(errorData.message || "Credenciais inválidas.");
       }
+    } catch (apiError) {
+      console.error("Erro ao tentar fazer login:", apiError);
+      setError("Erro ao conectar com o servidor de autenticação.");
     }
   }
 

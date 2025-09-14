@@ -17,26 +17,27 @@ const formatPhone = (value: string) => {
   return value
     .replace(/\D/g, "") // Remove tudo que não é dígito
     .replace(/(\d{2})(\d)/, "($1) $2") // Adiciona parênteses e espaço
-    .replace(/(\d{1})(\d{4})(\d{4})/, "$1 $2-$3") // Formato: (XX) X XXXX-XXXX
+    .replace(/(\d{5})(\d{4})/, "$1-$2") // Formato: (XX) XXXXX-XXXX
     .replace(/(-\d{4})\d+?$/, "$1"); // Limita a 11 dígitos
 };
 
 export default function ClientePage() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
   const router = useRouter();
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(""); // Limpa erro anterior
+    setError("");
+    setSuccess("");
 
     const form = new FormData(e.currentTarget);
     const email = form.get("email");
     const senha = form.get("senha");
 
-    // Simulação de requisição (troque pelo seu backend)
     const res = await fetch("/api/login", {
       method: "POST",
       body: JSON.stringify({ email, senha }),
@@ -44,13 +45,13 @@ export default function ClientePage() {
     });
     const data = await res.json();
 
-    if (data.error === "email") {
+    if (res.ok && data.success) {
+      localStorage.setItem("usuarioLogado", "true");
+      router.push("/");
+    } else if (data.error === "email") {
       setError("E-mail não cadastrado");
     } else if (data.error === "senha") {
       setError("Senha incorreta");
-    } else if (data.success) {
-      localStorage.setItem("usuarioLogado", "true");
-      router.push("/");
     } else {
       setError("Erro inesperado. Tente novamente.");
     }
@@ -59,15 +60,39 @@ export default function ClientePage() {
   async function handleCadastro(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setSuccess("");
+
     const form = new FormData(e.currentTarget);
-    // Pegue os campos necessários
-    const nome = form.get("nome");
-    const email = form.get("email");
-    const senha = form.get("senha");
-    const cpf = form.get("cpf");
-    const telefone = form.get("telefone");
-    // Faça o fetch para /api/cadastro
-    // ...
+    const nome = form.get("nome") as string;
+    const email = form.get("email") as string;
+    const senha = form.get("senha") as string;
+    const cpfValue = form.get("cpf") as string;
+    const telefoneValue = form.get("telefone") as string;
+    const [firstName, ...lastName] = nome.split(" ");
+
+    const res = await fetch("/api/cadastro", {
+      method: "POST",
+      body: JSON.stringify({
+        nome: firstName,
+        sobrenome: lastName.join(" "),
+        email,
+        senha,
+        cpf: cpfValue,
+        telefone: telefoneValue,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      setSuccess("Cadastro realizado com sucesso! Você já pode fazer o login.");
+      setIsLogin(true); // Muda para a tela de login
+    } else if (data.error) {
+      setError(data.error);
+    } else {
+      setError("Erro ao realizar o cadastro. Tente novamente.");
+    }
   }
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +111,13 @@ export default function ClientePage() {
         <h2 className="text-2xl font-bold text-white mb-6">{isLogin ? "Entrar na Conta" : "Cadastro de Cliente"}</h2>
         <form onSubmit={isLogin ? handleLogin : handleCadastro}>
           {!isLogin && (
-            <input type="text" placeholder="Nome" className="mb-4 w-full p-2 rounded bg-gray-700 text-white" required />
+            <input
+              type="text"
+              name="nome"
+              placeholder="Nome Completo"
+              className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
+              required
+            />
           )}
           <input
             type="email"
@@ -127,7 +158,8 @@ export default function ClientePage() {
               />
             </>
           )}
-          {error && <span className="text-red-500">{error}</span>}
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
           <button
             type="submit"
             className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
@@ -135,7 +167,14 @@ export default function ClientePage() {
           </button>
         </form>
         <div className="mt-4 text-center">
-          <button className="text-blue-400 underline" onClick={() => setIsLogin(!isLogin)} type="button">
+          <button
+            className="text-blue-400 underline"
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError("");
+              setSuccess("");
+            }}
+            type="button">
             {isLogin ? "Criar conta" : "Já tenho conta"}
           </button>
         </div>
