@@ -192,7 +192,3 @@ export default function AvatarMenu() {
     </div>
   );
 }
-
-<div className="absolute top-4 left-4">
-  <AvatarMenu />
-</div>;

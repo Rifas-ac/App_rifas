@@ -8,7 +8,7 @@ import AvatarMenu from "@/components/AvatarMenu";
 const compradoresFake = [
   {
     id: 1,
-    nome: "João Silva",
+    nome: "João Antonio",
     email: "joao@email.com",
     cpf: "123.456.789-00",
     telefone: "(11) 91234-5678",
