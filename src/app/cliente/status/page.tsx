@@ -1,98 +1,117 @@
 import { cookies } from "next/headers";
+import { CheckCircle, Clock, XCircle, ShoppingCart } from "lucide-react";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { Resend } from "resend";
+import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEmail";
 
-interface TicketGroup {
-  rifa: {
-    id: number;
-    nome: string;
-  };
-  numeros: string[];
-}
+// Função executada no servidor para confirmar o pagamento
+async function confirmarPagamento(sessionId: string) {
+  if (!sessionId) return null;
 
-interface UserData {
-  nome: string;
-  // Adicione outros campos do usuário se necessário
-}
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function getTickets(userEmail: string): Promise<TicketGroup[]> {
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
-  
-  const res = await fetch(`${baseUrl}/api/cliente/tickets?user=${userEmail}`, { cache: "no-store" });
-
-  if (!res.ok) {
-    const errorData = await res.json();
-    console.error("Falha ao buscar os tickets:", res.status, errorData);
-    return [];
-  }
-
-  const tickets = await res.json();
-  return tickets;
-}
-
-async function getUserData(userEmail: string): Promise<UserData | null> {
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
-
+  // Usa transação para garantir que a atualização e o envio de email ocorram juntos
   try {
-    const res = await fetch(`${baseUrl}/api/cliente/user?email=${userEmail}`, { cache: "no-store" });
+    const { usuario, rifa, ticketsAtualizados } = await prisma.$transaction(async (tx) => {
+      const tickets = await tx.ticket.findMany({
+        where: {
+          checkoutSessionId: sessionId,
+          status: "reservado", // Apenas confirma o que estava reservado
+        },
+        include: { usuario: true, rifa: true },
+      });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Falha ao buscar dados do usuário:", res.status, errorData);
-      return null;
+      if (tickets.length === 0 || !tickets[0].usuario || !tickets[0].rifa) {
+        // Se não houver tickets 'reservados', eles podem já ter sido processados.
+        // Retornamos nulo para que a página possa buscar os tickets já pagos.
+        return { usuario: null, rifa: null, ticketsAtualizados: [] };
+      }
+
+      await tx.ticket.updateMany({
+        where: { id: { in: tickets.map((t) => t.id) } },
+        data: { status: "pago" },
+      });
+
+      return {
+        usuario: tickets[0].usuario,
+        rifa: tickets[0].rifa,
+        ticketsAtualizados: tickets,
+      };
+    });
+
+    // Envia o e-mail de confirmação se a transação foi bem-sucedida
+    if (usuario && rifa && ticketsAtualizados.length > 0) {
+      await resend.emails.send({
+        from: "Garagem VW <onboarding@resend.dev>",
+        to: [usuario.email],
+        subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,        react: ConfirmacaoCompraEmail({
+          nomeUsuario: usuario.nome,
+          numerosComprados: ticketsAtualizados.map((t) => t.numero),
+          tituloRifa: rifa.titulo,
+        }),
+      });
     }
-
-    return res.json();
   } catch (error) {
-    console.error("Erro ao buscar dados do usuário:", error);
-    return null;
+    console.error(`Falha ao confirmar pagamento para a sessão ${sessionId}:`, error);
+    // Não lança o erro para a página, pois queremos mostrar os tickets existentes mesmo se o email falhar.
   }
+
+  // Após a tentativa de confirmação, busca todos os tickets da sessão para exibição
+  return prisma.ticket.findMany({
+    where: { checkoutSessionId: sessionId },
+    include: { rifa: true },
+    orderBy: { numero: "asc" },
+  });
 }
 
-export default async function StatusPage() {
-  const cookieStore = await cookies();
-  const userCookie = cookieStore.get("userEmail");
-  const userEmail = userCookie ? userCookie.value : null;
+export default async function StatusPage({ searchParams }: { searchParams: { session_id: string } }) {
+  const { session_id } = searchParams;
+  const tickets = await confirmarPagamento(session_id);
 
-  console.log("userCookie in StatusPage:", userCookie);
-  console.log("userEmail in StatusPage:", userEmail);
-
-  if (!userEmail) {
+  if (!tickets || tickets.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <p className="text-lg text-gray-700">Você precisa estar logado para ver seus tickets.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900 text-white">
+        <div className="w-full max-w-2xl bg-gray-800 shadow-lg rounded-lg p-8 text-center">
+          <ShoppingCart className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-center mb-4">Compra não encontrada</h1>
+          <p className="text-gray-300 mb-8">
+            Não foi possível localizar os detalhes da sua compra. Se você concluiu o pagamento, por favor, verifique seu e-mail ou entre em contato com o suporte.
+          </p>
+          <Link href="/">
+            <span className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
+              Voltar para a Rifa
+            </span>
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const [tickets, userData] = await Promise.all([
-    getTickets(userEmail),
-    getUserData(userEmail),
-  ]);
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 text-gray-800">
-      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-center mb-6 text-blue-700">Meus Tickets</h1>
-        {userData && <p className="text-xl text-center mb-4">Olá, {userData.nome}!</p>}
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900 text-white">
+      <div className="w-full max-w-2xl bg-gray-800 shadow-lg rounded-lg p-8 text-center">
+        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <h1 className="text-3xl font-bold text-center mb-4">Pagamento Aprovado!</h1>
+        <p className="text-gray-300 mb-8">Sua compra foi confirmada com sucesso. Abaixo estão seus números da sorte. Boa sorte!</p>
 
-        {tickets.length > 0 ? (
-          <div className="space-y-4">
-            {tickets.map((ticketGroup) => (
-              <div key={ticketGroup.rifa.id} className="border border-gray-200 rounded-lg p-4 bg-blue-50">
-                <h2 className="text-xl font-semibold text-blue-600">Rifa: {ticketGroup.rifa.nome}</h2>
-                <p><strong>Seus Números:</strong> {ticketGroup.numeros.join(", ")}</p>
-                {/* "Concurso" is not directly available in the current data structure. 
-                    Assuming "Rifa" itself is the contest for now. */}
-                <p><strong>Concurso:</strong> {ticketGroup.rifa.nome}</p>
-              </div>
+        <div className="bg-gray-700 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Rifa: {tickets[0].rifa.titulo}</h2>
+          <h3 className="text-lg font-semibold text-orange-400 mb-3">Seus Números:</h3>
+          <div className="flex flex-wrap justify-center gap-3">
+            {tickets.map((ticket) => (
+              <span key={ticket.id} className="bg-green-600 text-white font-bold py-2 px-4 rounded-md shadow-md">
+                {ticket.numero}
+              </span>
             ))}
           </div>
-        ) : (
-          <p className="text-center text-lg text-gray-600">Você ainda não comprou nenhum ticket.</p>
-        )}
+        </div>
+
+        <Link href="/">
+          <span className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
+            Voltar para a Rifa
+          </span>
+        </Link>
       </div>
     </div>
   );
