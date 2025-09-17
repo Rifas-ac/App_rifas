@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Garagem VW - Rifa Gol LS 1986",
 
   // Descrição para SEO e compartilhamento
-  description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",,
+  description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",
 
   // Palavras-chave para SEO
   keywords: ["rifa", "Mercedes", "AMG", "C300", "sorteio", "carro", "prêmio"],
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   // Configurações para redes sociais (Open Graph)
   openGraph: {
     title: "Garagem VW - Rifa Gol LS 1986",
-    description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",,
+    description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",
     type: "website",
     locale: "pt_BR",
   },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Garagem VW - Rifa Gol LS 1986",
-    description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",,
+    description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",
   },
   // Configurações para PWA (Progressive Web App)
 
