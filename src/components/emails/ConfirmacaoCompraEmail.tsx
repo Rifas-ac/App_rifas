@@ -4,7 +4,7 @@ interface ConfirmacaoCompraEmailProps {
   tituloRifa: string;
 }
 
-export const ConfirmacaoCompraEmail: React.FC<Readonly<ConfirmacaoCompraEmailProps>> = ({
+export const ConfirmacaoCompraEmail: React.FC<Readonly<ConfirmacaoCompraEmailProps>> = async ({
   nomeUsuario,
   numerosComprados,
   tituloRifa,

@@ -1,4 +1,4 @@
-import { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -9,18 +9,18 @@ const inter = Inter({ subsets: ["latin"] });
 // Configuração dos metadados que aparecerão no <head> da página
 export const metadata: Metadata = {
   // Título que aparece na aba do navegador
-  title: "AMG Power - Rifa Mercedes C300",
+  title: "Garagem VW - Rifa Gol LS 1986",
 
   // Descrição para SEO e compartilhamento
-  description: "Participe da rifa e concorra a uma Mercedes AMG C300. Números a partir de R$ 3,99!",
+  description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",,
 
   // Palavras-chave para SEO
   keywords: ["rifa", "Mercedes", "AMG", "C300", "sorteio", "carro", "prêmio"],
 
   // Configurações para redes sociais (Open Graph)
   openGraph: {
-    title: "AMG Power - Rifa Mercedes C300",
-    description: "Participe da rifa e concorra a uma Mercedes AMG C300. Números a partir de R$ 3,99!",
+    title: "Garagem VW - Rifa Gol LS 1986",
+    description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",,
     type: "website",
     locale: "pt_BR",
   },
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   // Configurações para Twitter
   twitter: {
     card: "summary_large_image",
-    title: "AMG Power - Rifa Mercedes C300",
-    description: "Participe da rifa e concorra a uma Mercedes AMG C300. Números a partir de R$ 3,99!",
+    title: "Garagem VW - Rifa Gol LS 1986",
+    description: "Participe da rifa e concorra a um Gol LS 1986. Números a partir de R$ 3,99!",,
   },
   // Configurações para PWA (Progressive Web App)
 
