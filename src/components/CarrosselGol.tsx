@@ -36,17 +36,17 @@ export default function CarrosselGol() {
   const scrollNext = () => emblaApi && emblaApi.scrollNext();
 
   return (
-    <div className="relative w-full max-w-lg mx-auto h-64">
+    <div className="relative w-full max-w-lg mx-auto h-96">
       {/* AvatarMenu posicionado dentro do carrossel */}
-      <div className="absolute top-4 left-4 z-20">
+      <div className="absolute top-4 right-4 z-20">
         <AvatarMenu />
       </div>
 
       {/* Carrossel */}
-      <div className="overflow-hidden rounded-t-2xl h-64" ref={emblaRef}>
-        <div className="embla__container flex flex-row h-64">
+      <div className="overflow-hidden rounded-t-2xl h-96" ref={emblaRef}>
+        <div className="embla__container flex flex-row h-96">
           {carros.map((carro) => (
-            <div className="embla__slide min-w-0 flex-[0_0_100%] relative h-64" key={carro.id}>
+            <div className="embla__slide min-w-0 flex-[0_0_100%] relative h-96" key={carro.id}>
               <Image src={carro.imagem} alt={carro.nome} fill className="object-cover" sizes="100vw" />
             </div>
           ))}

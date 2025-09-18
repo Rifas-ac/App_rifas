@@ -3,8 +3,9 @@
 import type React from "react";
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const images = [
   "/rifa-gol/gol-0.png",
@@ -23,10 +24,9 @@ const images = [
 ];
 
 const RifaHeader: React.FC = () => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
-  const autoplayRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) {
@@ -57,26 +57,6 @@ const RifaHeader: React.FC = () => {
     setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi, setSelectedIndex]);
 
-  const startAutoplay = useCallback(() => {
-    if (emblaApi) {
-      autoplayRef.current = setInterval(() => {
-        emblaApi.scrollNext();
-      }, 3000);
-    }
-  }, [emblaApi]);
-
-  const stopAutoplay = useCallback(() => {
-    if (autoplayRef.current) {
-      clearInterval(autoplayRef.current);
-      autoplayRef.current = null;
-    }
-  }, []);
-
-  const resetAutoplay = useCallback(() => {
-    stopAutoplay();
-    setTimeout(startAutoplay, 5000);
-  }, [startAutoplay, stopAutoplay]);
-
   useEffect(() => {
     if (!emblaApi) return;
 
@@ -85,13 +65,7 @@ const RifaHeader: React.FC = () => {
 
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
-
-    startAutoplay();
-
-    return () => {
-      stopAutoplay();
-    };
-  }, [emblaApi, setScrollSnaps, onSelect, startAutoplay, stopAutoplay]);
+  }, [emblaApi, setScrollSnaps, onSelect]);
 
   return (
     <div className="relative">
@@ -100,7 +74,7 @@ const RifaHeader: React.FC = () => {
           {images.map((src, index) => (
             <div
               key={index}
-              className="flex-none w-full pl-4 relative h-48 transition-transform duration-500 ease-in-out">
+              className="flex-none w-full pl-4 relative h-64 transition-transform duration-500 ease-in-out">
               <Image
                 src={src || "/placeholder.svg"}
                 alt={`Imagem do Gol LS 1986 ${index + 1}`}
@@ -154,8 +128,7 @@ const RifaHeader: React.FC = () => {
 
       {/* Badge de Preço */}
       <div
-        className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold text-white"
-        style={{ background: "#0ae477" }}>
+        className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold text-white bg-orange-500">
         APENAS R$ 3,99 🔥
       </div>
     </div>

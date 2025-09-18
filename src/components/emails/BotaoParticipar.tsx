@@ -13,7 +13,7 @@ const BotaoParticipar: React.FC<BotaoParticiparProps> = ({ isProcessing, valorTo
       disabled={isProcessing}
       className={`w-full font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg hover:shadow-xl transform hover:scale-105`}
       style={{
-        backgroundColor: isProcessing ? "#1a1a1a" : "#0ae477",
+        backgroundColor: isProcessing ? "#1a1a1a" : "#FF8C00",
         color: "white",
         cursor: isProcessing ? "not-allowed" : "pointer",
       }}>

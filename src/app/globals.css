@@ -44,7 +44,7 @@
 
   /* Estilos base para o corpo da página, usando as variáveis de tema */
   body {
-    background-color: hsl(var(--background));
+    background-color: #1e293b; /* Cor de fundo cinza-azulada escura */
     color: hsl(var(--foreground));
   }
 }

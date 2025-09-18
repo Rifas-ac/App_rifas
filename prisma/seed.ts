@@ -16,7 +16,7 @@ async function main() {
       titulo: 'Prêmio Especial de Lançamento!',
       descricao: 'Concorra a um incrível kit de desenvolvimento com teclado mecânico, mouse e um monitor ultrawide.',
       premio: 'Kit Dev Completo',
-      valorCota: 10.5,
+      valorCota: 3.99,
       totalNumeros: 100,
       status: 'ativa',
       imagemUrl: '/images/premio-exemplo.jpg'

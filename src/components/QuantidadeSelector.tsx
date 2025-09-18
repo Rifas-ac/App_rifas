@@ -19,7 +19,7 @@ const QuantidadeSelector: React.FC<QuantidadeSelectorProps> = ({ quantidade, set
             onClick={() => setQuantidade(qtd)}
             className={`py-2 px-4 rounded-lg font-medium transition-all hover:scale-105`}
             style={{
-              backgroundColor: quantidade === qtd ? "#0ae477" : "#1a1a1a",
+              backgroundColor: quantidade === qtd ? "#FF8C00" : "#334155",
               color: "white",
             }}>
             +<span className="font-bold">{qtd}</span>
@@ -34,7 +34,7 @@ const QuantidadeSelector: React.FC<QuantidadeSelectorProps> = ({ quantidade, set
             onClick={() => setQuantidade(qtd)}
             className={`py-2 px-4 rounded-lg font-medium transition-all hover:scale-105`}
             style={{
-              backgroundColor: quantidade === qtd ? "#0ae477" : "#1a1a1a",
+              backgroundColor: quantidade === qtd ? "#FF8C00" : "#334155",
               color: "white",
             }}>
             +<span className="font-bold">{qtd}</span>
@@ -46,26 +46,42 @@ const QuantidadeSelector: React.FC<QuantidadeSelectorProps> = ({ quantidade, set
       <div
         className="flex items-center justify-between rounded-lg p-3"
         style={{
-          background: "#1a1a1a",
+          background: "#0f172a",
         }}>
         <button
           onClick={() => setQuantidade(Math.max(1, quantidade - 1))}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:hover:scale-100"
           style={{
-            background: "#0ae477",
+            background: "#0f172a",
             color: "white",
           }}
-          disabled={quantidade <= 1}>
+          disabled={quantidade <= 3}>
           <Minus className="w-4 h-4" />
         </button>
 
-        <span className="font-bold text-xl text-white">{quantidade}</span>
+        <input
+          type="number"
+          value={quantidade}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!isNaN(value)) {
+              setQuantidade(value);
+            }
+          }}
+          onBlur={() => {
+            if (quantidade < 3) {
+              setQuantidade(3);
+            }
+          }}
+          className="w-16 text-center bg-transparent font-bold text-xl text-white focus:outline-none"
+          min="3"
+        />
 
         <button
           onClick={() => setQuantidade(quantidade + 1)}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
           style={{
-            background: "#0ae477",
+            background: "#0f172a",
             color: "white",
           }}>
           <Plus className="w-4 h-4" />

@@ -1,10 +1,6 @@
 import React from "react";
 import { Gift } from "lucide-react";
 
- <div>
-          <p className="text-sm text-gray-400">Prêmio dessa campanha</p>
-          <p className="font-medium text-white">Gol LS 1986</p> // <-- AQUI: Mudei o nome do prêmio
-        </div>
 const RifaFooter: React.FC = () => {
   return (
     <div className="p-4 border-t border-gray-600">
@@ -12,7 +8,7 @@ const RifaFooter: React.FC = () => {
         <Gift className="w-5 h-5" style={{ color: "#0ae477" }} />
         <div>
           <p className="text-sm text-gray-400">Prêmio dessa campanha</p>
-          <p className="font-medium text-white">Mercedes Benz C 300 AMG Line</p>
+          <p className="font-medium text-white">Gol LS 1986</p>
         </div>
       </div>
     </div>

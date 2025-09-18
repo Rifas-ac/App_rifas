@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Rifa } from "@prisma/client";
 import RifaCard from "@/components/RifaCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import FormularioCheckout from "@/components/FormularioCheckout";
+
 import NotaInformativa from "@/components/NotaInformativa";
 
 // Define um tipo para os dados da rifa com os tickets inclusos
@@ -151,11 +151,7 @@ export default function Home() {
           valorTotal={valorTotal}
           onParticipate={handleParticipate}
           onPromocaoClick={handlePromocaoClick}
-          showNumbers={false}
-          numerosGerados={[]}
           isProcessing={isLoading}
-          showSuccess={false}
-          onReset={() => {}}
         />
         <NotaInformativa showNumbers={false} />
 
@@ -165,12 +161,7 @@ export default function Home() {
             <DialogHeader>
               <DialogTitle className="text-center text-xl">Finalizar Compra</DialogTitle>
             </DialogHeader>
-            <FormularioCheckout
-              onSubmit={handleCheckoutSubmit}
-              carregando={isLoading}
-              valorTotal={valorTotal}
-              quantidadeNumeros={quantidade}
-            />
+            
             {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
           </DialogContent>
         </Dialog>
