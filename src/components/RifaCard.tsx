@@ -4,6 +4,8 @@ import type React from "react";
 import RifaHeader from "./RifaHeader";
 import RifaContent from "./RifaContent";
 import RifaFooter from "./RifaFooter";
+import NumerosGerados from "./NumerosGerados";
+import MensagemSucesso from "./MensagemSucesso";
 
 interface RifaCardProps {
   quantidade: number;
@@ -12,6 +14,10 @@ interface RifaCardProps {
   valorTotal: number;
   onParticipate: () => void;
   onPromocaoClick: () => void;
+  showSuccess: boolean;
+  onReset: () => void;
+  showNumbers: boolean;
+  numerosGerados: string[];
 }
 
 const RifaCard: React.FC<RifaCardProps> = ({
@@ -21,10 +27,32 @@ const RifaCard: React.FC<RifaCardProps> = ({
   valorTotal,
   onParticipate,
   onPromocaoClick,
+  showSuccess,
+  onReset,
+  showNumbers,
+  numerosGerados,
 }) => {
-  return (
-    <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#2a2a2a" }}>
-      <RifaHeader />
+  const renderContent = () => {
+    if (showSuccess) {
+      return (
+        <div className="p-4">
+          <MensagemSucesso />
+        </div>
+      );
+    }
+    if (showNumbers) {
+      return (
+        <div className="p-4">
+          <NumerosGerados
+            numerosGerados={numerosGerados}
+            quantidade={quantidade}
+            valorTotal={valorTotal}
+            onReset={onReset}
+          />
+        </div>
+      );
+    }
+    return (
       <RifaContent
         quantidade={quantidade}
         setQuantidade={setQuantidade}
@@ -33,6 +61,16 @@ const RifaCard: React.FC<RifaCardProps> = ({
         onParticipate={onParticipate}
         onPromocaoClick={onPromocaoClick}
       />
+    );
+  };
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden shadow-2xl"
+      style={{ background: "#2a2a2a" }}
+    >
+      <RifaHeader />
+      {renderContent()}
       <RifaFooter />
     </div>
   );

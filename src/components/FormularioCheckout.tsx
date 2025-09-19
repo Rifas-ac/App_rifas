@@ -15,10 +15,12 @@ type FormData = z.infer<typeof formSchema>;
 
 interface FormularioCheckoutProps {
   onSubmit: (data: FormData) => void;
-  isLoading: boolean;
+  carregando: boolean;
+  valorTotal: number;
+  quantidadeNumeros: number;
 }
 
-const FormularioCheckout: React.FC<FormularioCheckoutProps> = ({ onSubmit, isLoading }) => {
+const FormularioCheckout: React.FC<FormularioCheckoutProps> = ({ onSubmit, carregando, valorTotal, quantidadeNumeros }) => {
   const [formData, setFormData] = useState<FormData>({
     nome: '',
     sobrenome: '',
@@ -45,6 +47,10 @@ const FormularioCheckout: React.FC<FormularioCheckoutProps> = ({ onSubmit, isLoa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-4 mb-4 text-center bg-gray-700 rounded-lg">
+        <p className="text-lg">Você está adquirindo <span className="font-bold text-blue-400">{quantidadeNumeros}</span> número(s) da sorte.</p>
+        <p className="text-xl font-semibold">Valor Total: <span className="text-green-400">R$ {valorTotal.toFixed(2).replace('.', ',')}</span></p>
+      </div>
       <div>
         <label htmlFor="nome" className="block text-sm font-medium text-gray-300">Nome</label>
         <input type="text" name="nome" id="nome" value={formData.nome} onChange={handleChange} className="w-full px-4 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" />
@@ -70,8 +76,8 @@ const FormularioCheckout: React.FC<FormularioCheckoutProps> = ({ onSubmit, isLoa
         <input type="text" name="cpf" id="cpf" value={formData.cpf} onChange={handleChange} className="w-full px-4 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" />
         {errors?.flatten().fieldErrors.cpf && <p className="mt-1 text-sm text-red-500">{errors.flatten().fieldErrors.cpf}</p>}
       </div>
-      <button type="submit" disabled={isLoading} className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
-        {isLoading ? 'Gerando PIX...' : 'Gerar PIX'}
+      <button type="submit" disabled={carregando} className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+        {carregando ? 'Gerando PIX...' : 'Gerar PIX'}
       </button>
     </form>
   );
