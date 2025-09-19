@@ -10,9 +10,9 @@ import {
   formatarTelefone,
 } from "../utils/validacoes";
 
-// Dados do admin fixos
-const ADMIN_EMAIL = "calebexmz9@gmail.com";
-const ADMIN_SENHA = "88224646Ba!";
+// Admin credentials from environment variables
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+const ADMIN_SENHA = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
 export default function AvatarMenu() {
   const router = useRouter();

@@ -57,18 +57,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-const carros = [
-  { id: 1, nome: "Gol 1", imagem: "/rifa-gol/gol-1.png" },
-  { id: 2, nome: "Gol 2", imagem: "/rifa-gol/gol-2.png" },
-  { id: 3, nome: "Gol 3", imagem: "/rifa-gol/gol-3.png" },
-  { id: 4, nome: "Gol 4", imagem: "/rifa-gol/gol-4.png" },
-  { id: 5, nome: "Gol 5", imagem: "/rifa-gol/gol-5.png" },
-  { id: 6, nome: "Gol 6", imagem: "/rifa-gol/gol-6.png" },
-  { id: 7, nome: "Gol 7", imagem: "/rifa-gol/gol-7.png" },
-  { id: 8, nome: "Gol 8", imagem: "/rifa-gol/gol-8.png" },
-  { id: 9, nome: "Gol 9", imagem: "/rifa-gol/gol-9.png" },
-  { id: 10, nome: "Gol 10", imagem: "/rifa-gol/gol-10.png" },
-  { id: 11, nome: "Gol 11", imagem: "/rifa-gol/gol-11.png" },
-  { id: 12, nome: "Gol 12", imagem: "/rifa-gol/gol-12.png" },
-];
