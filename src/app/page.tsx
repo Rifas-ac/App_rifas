@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import { Rifa } from "@prisma/client";
 import RifaCard from "@/components/RifaCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
 import NotaInformativa from "@/components/NotaInformativa";
+import Image from 'next/image';
+import InputMask from 'react-input-mask-next';
 
-// Define um tipo para os dados da rifa com os tickets inclusos
+// Tipos
 type RifaComTickets = Rifa & { tickets: { status: string }[] };
 
 interface DadosCheckout {
@@ -18,6 +19,14 @@ interface DadosCheckout {
   cpf: string;
 }
 
+interface PixData {
+  qrCodeBase64: string;
+  pixCopiaECola: string;
+  transactionId: string;
+  valorTotal: number;
+  tempoExpiracao: number;
+}
+
 export default function Home() {
   const [rifa, setRifa] = useState<RifaComTickets | null>(null);
   const [quantidade, setQuantidade] = useState(3);
@@ -26,15 +35,25 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Efeito para buscar a rifa ativa quando o componente é montado
+  // Novos estados para o fluxo PIX
+  const [checkoutStep, setCheckoutStep] = useState<'form' | 'pix'>('form');
+  const [pixData, setPixData] = useState<PixData | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [comprador, setComprador] = useState<DadosCheckout>({
+    nome: '',
+    sobrenome: '',
+    email: '',
+    telefone: '',
+    cpf: '',
+  });
+
+  // Efeito para buscar a rifa ativa
   useEffect(() => {
     const fetchRifaAtiva = async () => {
       setIsLoading(true);
       try {
         const response = await fetch("/api/rifas/ativa");
-        if (!response.ok) {
-          throw new Error("Nenhuma rifa ativa encontrada.");
-        }
+        if (!response.ok) throw new Error("Nenhuma rifa ativa encontrada.");
         const data: RifaComTickets = await response.json();
         setRifa(data);
       } catch (err) {
@@ -43,82 +62,86 @@ export default function Home() {
         setIsLoading(false);
       }
     };
-
     fetchRifaAtiva();
   }, []);
 
-  // Efeito para calcular o valor total sempre que a quantidade ou a rifa mudar
+  // Efeito para calcular o valor total
   useEffect(() => {
     if (rifa) {
-      // Lógica de promoção: a partir de 10, o preço unitário tem desconto
       const valorUnitario = quantidade >= 10 ? 3.79 : rifa.valorCota;
       setValorTotal(quantidade * valorUnitario);
     }
   }, [quantidade, rifa]);
 
-  // Função para aplicar a promoção de 10 números
-  const handlePromocaoClick = () => {
-    setQuantidade(10);
-  };
+  // Efeito para o contador regressivo do PIX
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
-  // Função chamada quando o usuário clica em "Participar"
+  // Abre o modal e reseta o estado do checkout
   const handleParticipate = () => {
     if (!rifa) return;
-
     const ticketsDisponiveis = rifa.totalNumeros - rifa.tickets.filter((t) => t.status === "pago").length;
     if (quantidade > ticketsDisponiveis) {
       setError(`Apenas ${ticketsDisponiveis} números estão disponíveis.`);
       return;
     }
     setError(null);
+    setCheckoutStep('form');
+    setPixData(null);
     setIsCheckoutOpen(true);
   };
 
-  // Função chamada ao submeter o formulário de checkout
-  const handleCheckoutSubmit = async (dadosComprador: DadosCheckout) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setComprador(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!rifa) return;
     setIsLoading(true);
     setError(null);
 
     try {
-      // 1. Chama a API para reservar os números e obter os dados para o link de pagamento
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rifaId: rifa.id,
-          quantidade,
-          comprador: dadosComprador,
-        }),
+        body: JSON.stringify({ rifaId: rifa.id, quantidade, comprador }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Falha ao reservar os números.");
+        throw new Error(data.message || "Falha ao gerar cobrança PIX.");
       }
 
-      // 2. Constrói a URL de pagamento da InfinitePay
-      const checkoutBaseUrl = data.checkoutUrl;
-      const redirectUrl = data.redirectUrl;
-      const priceInCents = data.priceInCents;
-
-      const items = [{ name: "Rifa " + rifa.titulo, price: priceInCents, quantity: 1 }];
-      const itemsJson = JSON.stringify(items);
-      const encodedItems = encodeURIComponent(itemsJson);
-      const encodedRedirectUrl = encodeURIComponent(redirectUrl);
-
-      const paymentUrl = `${checkoutBaseUrl}?items=${encodedItems}&redirect_url=${encodedRedirectUrl}`;
-
-      // 3. Redireciona o usuário para a página de pagamento
-      window.location.href = paymentUrl;
+      setPixData(data);
+      setCountdown(data.tempoExpiracao);
+      setCheckoutStep('pix');
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocorreu um erro inesperado.");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Renderização condicional enquanto carrega ou se houver erro
+  const copyToClipboard = () => {
+    if (pixData?.pixCopiaECola) {
+      navigator.clipboard.writeText(pixData.pixCopiaECola);
+      alert("Código PIX copiado para a área de transferência!");
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   if (isLoading && !rifa) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
@@ -139,7 +162,7 @@ export default function Home() {
   }
 
   if (!rifa) {
-    return null; // ou um estado de "Nenhuma rifa no momento"
+    return null;
   }
 
   return (
@@ -150,19 +173,52 @@ export default function Home() {
           setQuantidade={setQuantidade}
           valorTotal={valorTotal}
           onParticipate={handleParticipate}
-          onPromocaoClick={handlePromocaoClick}
-          isProcessing={isLoading}
+          onPromocaoClick={() => setQuantidade(10)}
+          isProcessing={isLoading && isCheckoutOpen}
         />
         <NotaInformativa showNumbers={false} />
 
-        {/* Modal de Checkout */}
         <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
           <DialogContent className="bg-gray-800 border-gray-700 text-white">
             <DialogHeader>
-              <DialogTitle className="text-center text-xl">Finalizar Compra</DialogTitle>
+              <DialogTitle className="text-center text-xl">
+                {checkoutStep === 'form' ? 'Finalizar Compra' : 'Pague com PIX'}
+              </DialogTitle>
             </DialogHeader>
             
-            {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
+            {error && <p className="text-red-500 text-sm text-center my-2">{error}</p>}
+
+            {checkoutStep === 'form' ? (
+              <form onSubmit={handleCheckoutSubmit} className="space-y-4 p-4">
+                <input type="text" name="nome" placeholder="Nome" required value={comprador.nome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <input type="text" name="sobrenome" placeholder="Sobrenome" required value={comprador.sobrenome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <input type="email" name="email" placeholder="E-mail" required value={comprador.email} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <InputMask mask="(99) 99999-9999" value={comprador.telefone} onChange={handleInputChange}>
+                  {(inputProps: any) => <input {...inputProps} type="tel" name="telefone" placeholder="Telefone" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />}
+                </InputMask>
+                <InputMask mask="999.999.999-99" value={comprador.cpf} onChange={handleInputChange}>
+                  {(inputProps: any) => <input {...inputProps} type="text" name="cpf" placeholder="CPF" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />}
+                </InputMask>
+                <button type="submit" disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500">
+                  {isLoading ? 'Gerando PIX...' : `Pagar R$ ${valorTotal.toFixed(2)}`}
+                </button>
+              </form>
+            ) : pixData && (
+              <div className="flex flex-col items-center p-4 text-center">
+                <p className="mb-2">Escaneie o QR Code para pagar:</p>
+                <Image src={pixData.qrCodeBase64} alt="PIX QR Code" width={256} height={256} />
+                <p className="mt-2 text-lg font-bold text-orange-400">Expira em: {formatTime(countdown)}</p>
+                
+                <p className="mt-4 mb-2">Ou use o PIX Copia e Cola:</p>
+                <div className="w-full bg-gray-700 p-2 rounded border border-gray-600">
+                  <p className="text-xs break-all">{pixData.pixCopiaECola}</p>
+                </div>
+                <button onClick={copyToClipboard} className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                  Copiar Código
+                </button>
+                <p className="mt-4 text-sm text-gray-400">Após o pagamento, seus números serão enviados para o seu e-mail.</p>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
