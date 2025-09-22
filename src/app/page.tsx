@@ -34,6 +34,9 @@ export default function Home() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showNumbers, setShowNumbers] = useState(false);
+  const [numerosGerados, setNumerosGerados] = useState<string[]>([]);
 
   // Novos estados para o fluxo PIX
   const [checkoutStep, setCheckoutStep] = useState<'form' | 'pix'>('form');
@@ -93,6 +96,13 @@ export default function Home() {
     setCheckoutStep('form');
     setPixData(null);
     setIsCheckoutOpen(true);
+  };
+
+  const handleReset = () => {
+    setShowSuccess(false);
+    setShowNumbers(false);
+    setNumerosGerados([]);
+    setQuantidade(3);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,6 +185,10 @@ export default function Home() {
           onParticipate={handleParticipate}
           onPromocaoClick={() => setQuantidade(10)}
           isProcessing={isLoading && isCheckoutOpen}
+          showSuccess={showSuccess}
+          onReset={handleReset}
+          showNumbers={showNumbers}
+          numerosGerados={numerosGerados}
         />
         <NotaInformativa showNumbers={false} />
 
@@ -193,12 +207,8 @@ export default function Home() {
                 <input type="text" name="nome" placeholder="Nome" required value={comprador.nome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <input type="text" name="sobrenome" placeholder="Sobrenome" required value={comprador.sobrenome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <input type="email" name="email" placeholder="E-mail" required value={comprador.email} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <InputMask mask="(99) 99999-9999" value={comprador.telefone} onChange={handleInputChange}>
-                  {(inputProps: any) => <input {...inputProps} type="tel" name="telefone" placeholder="Telefone" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />}
-                </InputMask>
-                <InputMask mask="999.999.999-99" value={comprador.cpf} onChange={handleInputChange}>
-                  {(inputProps: any) => <input {...inputProps} type="text" name="cpf" placeholder="CPF" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />}
-                </InputMask>
+                <InputMask mask="(99) 99999-9999" value={comprador.telefone} onChange={handleInputChange} name="telefone" type="tel" placeholder="Telefone" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <InputMask mask="999.999.999-99" value={comprador.cpf} onChange={handleInputChange} name="cpf" type="text" placeholder="CPF" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <button type="submit" disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500">
                   {isLoading ? 'Gerando PIX...' : `Pagar R$ ${valorTotal.toFixed(2)}`}
                 </button>
