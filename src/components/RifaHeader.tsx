@@ -6,6 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import AvatarMenu from "./AvatarMenu";
 
 const images = [
   "/rifa-gol/gol-0.png",
@@ -31,14 +32,12 @@ const RifaHeader: React.FC = () => {
   const scrollPrev = useCallback(() => {
     if (emblaApi) {
       emblaApi.scrollPrev();
-      resetAutoplay();
     }
   }, [emblaApi]);
 
   const scrollNext = useCallback(() => {
     if (emblaApi) {
       emblaApi.scrollNext();
-      resetAutoplay();
     }
   }, [emblaApi]);
 
@@ -46,7 +45,6 @@ const RifaHeader: React.FC = () => {
     (index: number) => {
       if (emblaApi) {
         emblaApi.scrollTo(index);
-        resetAutoplay();
       }
     },
     [emblaApi]
@@ -69,6 +67,10 @@ const RifaHeader: React.FC = () => {
 
   return (
     <div className="relative">
+      <div className="absolute top-4 left-4 z-20">
+        <AvatarMenu />
+      </div>
+
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex touch-pan-y -ml-4">
           {images.map((src, index) => (

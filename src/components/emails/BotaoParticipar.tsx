@@ -11,12 +11,12 @@ const BotaoParticipar: React.FC<BotaoParticiparProps> = ({ isProcessing, valorTo
     <button
       onClick={onParticipate}
       disabled={isProcessing}
-      className={`w-full font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg hover:shadow-xl transform hover:scale-105`}
-      style={{
-        backgroundColor: isProcessing ? "#1a1a1a" : "#FF8C00",
-        color: "white",
-        cursor: isProcessing ? "not-allowed" : "pointer",
-      }}>
+      className={`w-full font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg hover:shadow-xl transform hover:scale-105 text-white ${
+        isProcessing
+          ? "bg-gray-900 cursor-not-allowed"
+          : "bg-orange-500 cursor-pointer"
+      }`}
+    >
       {isProcessing ? (
         <span className="flex items-center justify-center gap-2">
           <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin border-white"></div>
@@ -24,7 +24,7 @@ const BotaoParticipar: React.FC<BotaoParticiparProps> = ({ isProcessing, valorTo
         </span>
       ) : (
         <>
-          Participar <span style={{ color: "#ffffff" }}>R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
+          Participar <span className="text-white">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
         </>
       )}
     </button>

@@ -13,7 +13,7 @@ const PromocaoCard: React.FC<PromocaoCardProps> = ({ onPromocaoClick }) => {
       </div>
       <button
         onClick={onPromocaoClick}
-        className="w-full text-center py-3 rounded-lg font-bold shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl bg-orange-500">
+        className="w-full text-center py-3 rounded-lg font-bold shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl bg-green-600">
         <span className="font-extrabold text-lg text-white">10</span> por
         <span className="font-extrabold text-lg text-white"> R$ 37,90</span>
       </button>

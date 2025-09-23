@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import NotaInformativa from "@/components/NotaInformativa";
 import Image from 'next/image';
 import InputMask from 'react-input-mask-next';
+import Cookies from "js-cookie";
 
 // Tipos
 type RifaComTickets = Rifa & { tickets: { status: string }[] };
@@ -37,6 +38,7 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showNumbers, setShowNumbers] = useState(false);
   const [numerosGerados, setNumerosGerados] = useState<string[]>([]);
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
 
   // Novos estados para o fluxo PIX
   const [checkoutStep, setCheckoutStep] = useState<'form' | 'pix'>('form');
@@ -86,6 +88,12 @@ export default function Home() {
 
   // Abre o modal e reseta o estado do checkout
   const handleParticipate = () => {
+    const userType = Cookies.get("userType");
+    if (!userType) {
+      setShowLoginRequired(true);
+      return;
+    }
+
     if (!rifa) return;
     const ticketsDisponiveis = rifa.totalNumeros - rifa.tickets.filter((t) => t.status === "pago").length;
     if (quantidade > ticketsDisponiveis) {
@@ -229,6 +237,28 @@ export default function Home() {
                 <p className="mt-4 text-sm text-gray-400">Após o pagamento, seus números serão enviados para o seu e-mail.</p>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showLoginRequired} onOpenChange={setShowLoginRequired}>
+          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl text-orange-500">Login Necessário</DialogTitle>
+            </DialogHeader>
+            <div className="p-4 text-center">
+              <p className="mb-4">
+                Você precisa estar logado para participar.
+              </p>
+              <p>
+                Por favor, faça o login ou crie uma conta usando o ícone de avatar no canto superior da tela.
+              </p>
+              <button
+                onClick={() => setShowLoginRequired(false)}
+                className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Entendi
+              </button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -1,7 +1,25 @@
 import { PrismaClient } from "@prisma/client";
 
-// Inicializa o cliente do Prisma
-const prisma = new PrismaClient();
+// Get the database URL from environment variables
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set in the .env file");
+}
+
+// Append the pgbouncer parameter for Supabase connection pooling
+const urlWithPgBouncer = new URL(databaseUrl);
+urlWithPgBouncer.searchParams.set("pgbouncer", "true");
+
+// Initialize Prisma Client with the modified URL
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: urlWithPgBouncer.toString(),
+    },
+  },
+});
+
 async function main() {
   console.log("Iniciando o processo de seeding...");
 
