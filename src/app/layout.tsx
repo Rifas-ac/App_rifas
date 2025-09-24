@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: 'Rifas AC - Concorra a prêmios incríveis',
 
   // Descrição para SEO e compartilhamento
-  description: 'Participe de nossas rifas e tenha a chance de ganhar prêmios fantásticos. Simples, rápido e seguro!',
+  description: 'Concorra a Gol LS 1986 e ele Pode Ser Seu',
 
   // Palavras-chave para SEO
   keywords: ['rifa', 'sorteio', 'prêmios', 'concorrer', 'ganhar'],
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   // Configurações para redes sociais (Open Graph)
   openGraph: {
     title: 'Rifas AC - Participe e Ganhe',
-    description: 'Participe de nossas rifas e tenha a chance de ganhar prêmios fantásticos!',
+    description: 'Concorra a Gol LS 1986 e ele Pode Ser Seu',
     type: 'website',
     locale: 'pt_BR',
   },
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Rifas AC - Participe e Ganhe',
-    description: 'Participe de nossas rifas e tenha a chance de ganhar prêmios fantásticos!',
+    description: 'Concorra a Gol LS 1986 e ele Pode Ser Seu',
   },
 
   // Configurações de ícones
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
+    icon: '/rifa-gol/logo/logo-principal.png',
+    shortcut: '/rifa-gol/logo/logo-principal.png',
     apple: '/apple-touch-icon.png',
   },
 };
