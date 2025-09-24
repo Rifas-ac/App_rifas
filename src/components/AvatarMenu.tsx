@@ -9,6 +9,7 @@ import {
   formatarCPF,
   formatarTelefone,
 } from "../utils/validacoes";
+import CadastroSucessoPopup from "./CadastroSucessoPopup";
 
 // As credenciais de admin agora devem ser configuradas no seu ambiente
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -19,6 +20,7 @@ export default function AvatarMenu() {
   const [open, setOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showCadastro, setShowCadastro] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
@@ -124,10 +126,7 @@ export default function AvatarMenu() {
         }
         
         // Sucesso
-        alert("Cadastro realizado com sucesso! Faça o login para continuar.");
-        setShowCadastro(false);
-        setShowLogin(true); // Direciona para o login
-        setError("");
+        setShowSuccessPopup(true);
         
     } catch(err: any) {
         setError(err.message);
@@ -142,8 +141,16 @@ export default function AvatarMenu() {
     window.location.reload();
   }
 
+  const closePopupAndSwitchToLogin = () => {
+    setShowSuccessPopup(false);
+    setShowCadastro(false);
+    setShowLogin(true);
+    setError("");
+  };
+
   return (
     <div className="relative">
+      {showSuccessPopup && <CadastroSucessoPopup onClose={closePopupAndSwitchToLogin} />}
       <button
         className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white ${color}`}
         onClick={() => setOpen(!open)}>

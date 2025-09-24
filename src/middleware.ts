@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Esta função de middleware será executada para cada rota definida no 'matcher'.
 export function middleware(request: NextRequest) {
+  console.log('Middleware executing...');
+  console.log('ADMIN_USERNAME from env:', process.env.ADMIN_USERNAME);
+  console.log('ADMIN_PASSWORD from env:', process.env.ADMIN_PASSWORD);
+
   // 1. Obtém as credenciais das variáveis de ambiente.
   const basicAuthUser = process.env.ADMIN_USERNAME;
   const basicAuthPass = process.env.ADMIN_PASSWORD;
@@ -11,8 +15,13 @@ export function middleware(request: NextRequest) {
 
   // 3. Se o header de autorização existir...
   if (authHeader) {
+    console.log('Auth header found:', authHeader);
     const auth = authHeader.split(' ')[1];
-    const [user, pass] = atob(auth).split(':');
+    const decodedAuth = Buffer.from(auth, 'base64').toString('ascii');
+    console.log('Decoded auth:', decodedAuth);
+    const [user, pass] = decodedAuth.split(':');
+    console.log('User from header:', user);
+    console.log('Pass from header:', pass);
 
     // 4. Compara as credenciais fornecidas com as credenciais do .env.
     if (user === basicAuthUser && pass === basicAuthPass) {

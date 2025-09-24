@@ -106,7 +106,7 @@ const RifaHeader: React.FC = () => {
       </button>
 
       {/* Indicadores de Posição (Dots) */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 z-10">
         {scrollSnaps.map((_, index) => (
           <button
             key={index}
@@ -123,14 +123,13 @@ const RifaHeader: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
       {/* Informações sobrepostas na imagem */}
-      <div className="absolute bottom-4 left-4 right-4">
-        <h2 className="text-xl font-bold text-white mb-1">Gol LS 1986 Pode Ser Sua</h2>
+      <div className="absolute bottom-6 left-4 right-4">
+        <h1 className="text-xl font-bold text-white mb-1">Gol LS 1986 Pode Ser Seu</h1>
         <p className="text-sm text-gray-300">Sorteio: Loteria Federal</p>
       </div>
 
       {/* Badge de Preço */}
-      <div
-        className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold text-white bg-orange-500">
+      <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold text-white bg-orange-500">
         APENAS R$ 3,99 🔥
       </div>
     </div>

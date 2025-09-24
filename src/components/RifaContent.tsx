@@ -25,6 +25,20 @@ const RifaContent: React.FC<RifaContentProps> = ({
       <PromocaoCard onPromocaoClick={onPromocaoClick} />
       <QuantidadeSelector quantidade={quantidade} setQuantidade={setQuantidade} />
       <BotaoParticipar isProcessing={isProcessing} valorTotal={valorTotal} onParticipate={onParticipate} />
+      <div className="text-sm text-gray-400 mt-4">
+        <h6 className="text-lg font-bold text-white mb-2">Informações:</h6>
+        <ul className="list-disc list-inside space-y-2">
+          <li>
+            Gol LS 1986, motor AP 1.6 a álcool. Carro de coleção com placa preta, uma verdadeira raridade, com interior
+            totalmente monocromático em ótimo estado.
+          </li>
+          <li>
+            As taxas de transferência e qualquer custo de transporte para fora do Distrito Federal são de inteira
+            responsabilidade do ganhador.
+          </li>
+          <li>A data do sorteio será divulgada posteriormente</li>
+        </ul>
+      </div>
     </div>
   );
 };

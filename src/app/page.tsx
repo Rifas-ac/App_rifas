@@ -6,7 +6,7 @@ import RifaCard from "@/components/RifaCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NotaInformativa from "@/components/NotaInformativa";
 import Image from 'next/image';
-import InputMask from 'react-input-mask-next';
+import { IMaskInput } from 'react-imask';
 import Cookies from "js-cookie";
 
 // Tipos
@@ -215,8 +215,8 @@ export default function Home() {
                 <input type="text" name="nome" placeholder="Nome" required value={comprador.nome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <input type="text" name="sobrenome" placeholder="Sobrenome" required value={comprador.sobrenome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <input type="email" name="email" placeholder="E-mail" required value={comprador.email} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <InputMask mask="(99) 99999-9999" value={comprador.telefone} onChange={handleInputChange} name="telefone" type="tel" placeholder="Telefone" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <InputMask mask="999.999.999-99" value={comprador.cpf} onChange={handleInputChange} name="cpf" type="text" placeholder="CPF" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <IMaskInput mask="(00) 00000-0000" value={comprador.telefone} onAccept={(value) => handleInputChange({ target: { name: 'telefone', value } } as any)} name="telefone" type="tel" placeholder="Telefone" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <IMaskInput mask="000.000.000-00" value={comprador.cpf} onAccept={(value) => handleInputChange({ target: { name: 'cpf', value } } as any)} name="cpf" type="text" placeholder="CPF" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <button type="submit" disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500">
                   {isLoading ? 'Gerando PIX...' : `Pagar R$ ${valorTotal.toFixed(2)}`}
                 </button>

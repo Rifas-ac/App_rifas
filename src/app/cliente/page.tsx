@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CadastroSucessoPopup from "@/components/CadastroSucessoPopup";
 
 // Função para aplicar máscara de CPF
 const formatCPF = (value: string) => {
@@ -24,7 +25,7 @@ const formatPhone = (value: string) => {
 export default function ClientePage() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
   const router = useRouter();
@@ -32,7 +33,6 @@ export default function ClientePage() {
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    setSuccess("");
 
     const form = new FormData(e.currentTarget);
     const email = form.get("email");
@@ -60,7 +60,6 @@ export default function ClientePage() {
   async function handleCadastro(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    setSuccess("");
 
     const form = new FormData(e.currentTarget);
     const nome = form.get("nome") as string;
@@ -86,8 +85,7 @@ export default function ClientePage() {
     const data = await res.json();
 
     if (res.ok && data.success) {
-      setSuccess("Cadastro realizado com sucesso! Você já pode fazer o login.");
-      setIsLogin(true); // Muda para a tela de login
+      setShowSuccessPopup(true);
     } else if (data.error) {
       setError(data.error);
     } else {
@@ -105,78 +103,84 @@ export default function ClientePage() {
     setTelefone(formatted);
   };
 
+  const closePopupAndSwitchToLogin = () => {
+    setShowSuccessPopup(false);
+    setIsLogin(true);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl p-8">
-        <h2 className="text-2xl font-bold text-white mb-6">{isLogin ? "Entrar na Conta" : "Cadastro de Cliente"}</h2>
-        <form onSubmit={isLogin ? handleLogin : handleCadastro}>
-          {!isLogin && (
-            <input
-              type="text"
-              name="nome"
-              placeholder="Nome Completo"
-              className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
-              required
-            />
-          )}
-          <input
-            type="email"
-            name="email"
-            required
-            pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-            placeholder="E-mail"
-            className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
-          />
-          <input
-            type="password"
-            name="senha"
-            placeholder="Senha"
-            className="mb-6 w-full p-2 rounded bg-gray-700 text-white"
-            required
-          />
-          {!isLogin && (
-            <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <div className="max-w-md mx-auto">
+        {showSuccessPopup && <CadastroSucessoPopup onClose={closePopupAndSwitchToLogin} />}
+        <div className="w-full bg-gray-800 rounded-2xl shadow-2xl p-8">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">{isLogin ? "Entrar na Conta" : "Cadastro de Cliente"}</h2>
+          <form onSubmit={isLogin ? handleLogin : handleCadastro}>
+            {!isLogin && (
               <input
                 type="text"
-                name="cpf"
-                value={cpf}
-                onChange={handleCpfChange}
-                placeholder="CPF"
+                name="nome"
+                placeholder="Nome Completo"
                 className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
-                maxLength={14}
                 required
               />
-              <input
-                type="tel"
-                name="telefone"
-                value={telefone}
-                onChange={handlePhoneChange}
-                placeholder="Telefone"
-                className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
-                maxLength={16}
-                required
-              />
-            </>
-          )}
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
-            {isLogin ? "Entrar" : "Cadastrar"}
-          </button>
-        </form>
-        <div className="mt-4 text-center">
-          <button
-            className="text-blue-400 underline"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError("");
-              setSuccess("");
-            }}
-            type="button">
-            {isLogin ? "Criar conta" : "Já tenho conta"}
-          </button>
+            )}
+            <input
+              type="email"
+              name="email"
+              required
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+              placeholder="E-mail"
+              className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
+            />
+            <input
+              type="password"
+              name="senha"
+              placeholder="Senha"
+              className="mb-6 w-full p-2 rounded bg-gray-700 text-white"
+              required
+            />
+            {!isLogin && (
+              <>
+                <input
+                  type="text"
+                  name="cpf"
+                  value={cpf}
+                  onChange={handleCpfChange}
+                  placeholder="CPF"
+                  className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
+                  maxLength={14}
+                  required
+                />
+                <input
+                  type="tel"
+                  name="telefone"
+                  value={telefone}
+                  onChange={handlePhoneChange}
+                  placeholder="Telefone"
+                  className="mb-4 w-full p-2 rounded bg-gray-700 text-white"
+                  maxLength={16}
+                  required
+                />
+              </>
+            )}
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
+              {isLogin ? "Entrar" : "Cadastrar"}
+            </button>
+          </form>
+          <div className="mt-4 text-center">
+            <button
+              className="text-blue-400 underline"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError("");
+              }}
+              type="button">
+              {isLogin ? "Criar conta" : "Já tenho conta"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

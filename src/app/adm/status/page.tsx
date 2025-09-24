@@ -31,10 +31,9 @@ async function getAdminRifaData(): Promise<RifaData | null> {
     : "http://localhost:3000";
 
   try {
-    const res = await fetch(`${baseUrl}/api/admin/rifas/active/buyers`, {
+    const res = await fetch(`${baseUrl}/api/admin/rifas/ativo/compradores`, {
       headers: {
-        // Adicione as credenciais de autenticação básica se necessário
-        // 'Authorization': `Basic ${btoa(`${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`)}`
+        'Authorization': `Basic ${Buffer.from(`${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`).toString('base64')}`
       },
       cache: "no-store", // Garante que os dados sejam sempre atualizados
     });
