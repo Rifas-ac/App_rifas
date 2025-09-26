@@ -36,6 +36,10 @@ model Usuario {
   senha     String   // Novo campo para a senha
   createdAt DateTime @default(now())
   tickets   Ticket[] // Relação: Um usuário pode ter muitos tickets
+
+  // Campos adicionais para recuperação de senha
+  resetCode        String?
+  resetCodeExpires DateTime?
 }
 
 // Tabela para os números da rifa comprados por um usuário
