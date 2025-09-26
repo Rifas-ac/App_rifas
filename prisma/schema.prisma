@@ -27,19 +27,17 @@ model Rifa {
 
 // Tabela para os compradores dos tickets
 model Usuario {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  sobrenome String?
-  cpf       String?   @unique // CPF deve ser único
-  email     String   @unique // Email deve ser único
-  telefone  String
-  senha     String   // Novo campo para a senha
-  createdAt DateTime @default(now())
-  tickets   Ticket[] // Relação: Um usuário pode ter muitos tickets
-
-  // Campos adicionais para recuperação de senha
+  id               Int      @id @default(autoincrement())
+  nome             String
+  sobrenome        String?
+  cpf              String?   @unique
+  email            String   @unique
+  telefone         String
+  senha            String
+  createdAt        DateTime @default(now())
   resetCode        String?
   resetCodeExpires DateTime?
+  tickets          Ticket[] // Adicione esta linha
 }
 
 // Tabela para os números da rifa comprados por um usuário
