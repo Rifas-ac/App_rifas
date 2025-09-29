@@ -9,15 +9,15 @@ import MensagemSucesso from "./MensagemSucesso";
 
 interface RifaCardProps {
   quantidade: number;
-  setQuantidade: (valor: number) => void;
-  isProcessing: boolean;
+  setQuantidade: React.Dispatch<React.SetStateAction<number>>;
   valorTotal: number;
   onParticipate: () => void;
   onPromocaoClick: () => void;
-  showSuccess: boolean;
-  onReset: () => void;
-  showNumbers: boolean;
-  numerosGerados: string[];
+  isProcessing: boolean;
+  showSuccess?: boolean;
+  onReset?: () => void;
+  showNumbers?: boolean;
+  numerosGerados?: number[];
 }
 
 const RifaCard: React.FC<RifaCardProps> = ({
@@ -44,10 +44,10 @@ const RifaCard: React.FC<RifaCardProps> = ({
       return (
         <div className="p-4">
           <NumerosGerados
-            numerosGerados={numerosGerados}
+            numerosGerados={(numerosGerados ?? []).map(String)}
             quantidade={quantidade}
             valorTotal={valorTotal}
-            onReset={onReset}
+            onReset={onReset ?? (() => {})}
           />
         </div>
       );
@@ -65,15 +65,16 @@ const RifaCard: React.FC<RifaCardProps> = ({
   };
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden shadow-2xl"
-      style={{ background: "#2a2a2a" }}
-    >
+    <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#2a2a2a" }}>
       <RifaHeader />
       {renderContent()}
       <RifaFooter />
     </div>
   );
 };
+
+interface Props {
+  onReset?: () => void;
+}
 
 export default RifaCard;

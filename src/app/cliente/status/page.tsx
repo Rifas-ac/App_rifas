@@ -1,111 +1,82 @@
-import { cookies } from "next/headers";
-import { CheckCircle, Clock, XCircle, ShoppingCart } from "lucide-react";
+"use client";
+
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
-import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEmail";
-import React, { useEffect, useState } from "react";
 
-// Função executada no servidor para confirmar o pagamento
-async function confirmarPagamento(sessionId: string) {
-  if (!sessionId) return null;
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  // Usa transação para garantir que a atualização e o envio de email ocorram juntos
-  try {
-    const { usuario, rifa, ticketsAtualizados } = await prisma.$transaction(async (tx) => {
-      const tickets = await tx.ticket.findMany({
-        where: {
-          checkoutSessionId: sessionId,
-          status: "reservado", // Apenas confirma o que estava reservado
-        },
-        include: { usuario: true, rifa: true },
-      });
-
-      if (tickets.length === 0 || !tickets[0].usuario || !tickets[0].rifa) {
-        // Se não houver tickets 'reservados', eles podem já ter sido processados.
-        // Retornamos nulo para que a página possa buscar os tickets já pagos.
-        return { usuario: null, rifa: null, ticketsAtualizados: [] };
-      }
-
-      await tx.ticket.updateMany({
-        where: { id: { in: tickets.map((t) => t.id) } },
-        data: { status: "pago" },
-      });
-
-      return {
-        usuario: tickets[0].usuario,
-        rifa: tickets[0].rifa,
-        ticketsAtualizados: tickets,
-      };
-    });
-
-    // Envia o e-mail de confirmação se a transação foi bem-sucedida
-    if (usuario && rifa && ticketsAtualizados.length > 0) {
-      await resend.emails.send({
-        from: "Garagem VW <onboarding@resend.dev>",
-        to: [usuario.email],
-        subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
-        react: await ConfirmacaoCompraEmail({
-          nomeUsuario: usuario.nome,
-          numerosComprados: ticketsAtualizados.map((t) => t.numero),
-          tituloRifa: rifa.titulo,
-        }),
-      });
-    }
-  } catch (error) {
-    console.error(`Falha ao confirmar pagamento para a sessão ${sessionId}:`, error);
-    // Não lança o erro para a página, pois queremos mostrar os tickets existentes mesmo se o email falhar.
-  }
-
-  // Após a tentativa de confirmação, busca todos os tickets da sessão para exibição
-  return prisma.ticket.findMany({
-    where: { checkoutSessionId: sessionId },
-    include: { rifa: true },
-    orderBy: { numero: "asc" },
-  });
+// Tipagem para os dados do ticket que esperamos da API
+interface Ticket {
+  id: number;
+  numero: string;
+  rifa: {
+    titulo: string;
+  };
 }
 
-interface PageProps {
-  searchParams?: { session_id?: string };
-}
+function StatusPage() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
 
-const Page = ({ searchParams }: { searchParams: { session_id?: string } }) => {
-  const session_id = searchParams?.session_id;
-  const [tickets, setTickets] = useState<any[] | null>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await confirmarPagamento(session_id || "");
-      setTickets(response);
+    // Se não houver session_id, não faz nada
+    if (!sessionId) {
+      setError("ID da compra não encontrado.");
       setLoading(false);
+      return;
+    }
+
+    const fetchAndConfirmPayment = async () => {
+      try {
+        const response = await fetch("/api/confirm-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Falha ao buscar os detalhes da compra.");
+        }
+
+        const data = await response.json();
+        setTickets(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Ocorreu um erro desconhecido.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchData();
-  }, [session_id]);
+    fetchAndConfirmPayment();
+  }, [sessionId]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4 bg-gray-900 text-white">Carregando...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900 text-white space-y-4">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-500"></div>
+        <p className="text-lg">Confirmando seu pagamento...</p>
+      </div>
     );
   }
 
-  if (!tickets || tickets.length === 0) {
+  if (error || tickets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900 text-white">
         <div className="w-full max-w-2xl bg-gray-800 shadow-lg rounded-lg p-8 text-center">
           <ShoppingCart className="w-16 h-16 text-orange-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-center mb-4">Compra não encontrada</h1>
           <p className="text-gray-300 mb-8">
-            Não foi possível localizar os detalhes da sua compra. Se você concluiu o pagamento, por favor, verifique seu
-            e-mail ou entre em contato com o suporte.
+            {error ||
+              "Não foi possível localizar os detalhes da sua compra. Se o pagamento foi concluído, verifique seu e-mail."}
           </p>
-          <Link href="/">
-            <span className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
-              Voltar para a Rifa
-            </span>
+          <Link
+            href="/"
+            className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
+            Voltar para a Rifa
           </Link>
         </div>
       </div>
@@ -118,9 +89,8 @@ const Page = ({ searchParams }: { searchParams: { session_id?: string } }) => {
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-center mb-4">Pagamento Aprovado!</h1>
         <p className="text-gray-300 mb-8">
-          Sua compra foi confirmada com sucesso. Abaixo estão seus números da sorte. Boa sorte!
+          Sua compra foi confirmada com sucesso. Seus números da sorte foram enviados para o seu e-mail. Boa sorte!
         </p>
-
         <div className="bg-gray-700 rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Rifa: {tickets[0].rifa.titulo}</h2>
           <h3 className="text-lg font-semibold text-orange-400 mb-3">Seus Números:</h3>
@@ -132,15 +102,20 @@ const Page = ({ searchParams }: { searchParams: { session_id?: string } }) => {
             ))}
           </div>
         </div>
-
-        <Link href="/">
-          <span className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
-            Voltar para a Rifa
-          </span>
+        <Link
+          href="/"
+          className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
+          Voltar para a Rifa
         </Link>
       </div>
     </div>
   );
-};
+}
 
-export default Page;
+export default function PageWrapper() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <StatusPage />
+    </Suspense>
+  );
+}

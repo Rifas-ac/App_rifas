@@ -5,8 +5,8 @@ import { Rifa } from "@prisma/client";
 import RifaCard from "@/components/RifaCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NotaInformativa from "@/components/NotaInformativa";
-import Image from 'next/image';
-import { IMaskInput } from 'react-imask';
+import Image from "next/image";
+import { IMaskInput } from "react-imask";
 import Cookies from "js-cookie";
 
 // Tipos
@@ -37,19 +37,19 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showNumbers, setShowNumbers] = useState(false);
-  const [numerosGerados, setNumerosGerados] = useState<string[]>([]);
+  const [numerosGerados, setNumerosGerados] = useState<number[]>([]);
   const [showLoginRequired, setShowLoginRequired] = useState(false);
 
   // Novos estados para o fluxo PIX
-  const [checkoutStep, setCheckoutStep] = useState<'form' | 'pix'>('form');
+  const [checkoutStep, setCheckoutStep] = useState<"form" | "pix">("form");
   const [pixData, setPixData] = useState<PixData | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [comprador, setComprador] = useState<DadosCheckout>({
-    nome: '',
-    sobrenome: '',
-    email: '',
-    telefone: '',
-    cpf: '',
+    nome: "",
+    sobrenome: "",
+    email: "",
+    telefone: "",
+    cpf: "",
   });
 
   // Efeito para buscar a rifa ativa
@@ -101,7 +101,7 @@ export default function Home() {
       return;
     }
     setError(null);
-    setCheckoutStep('form');
+    setCheckoutStep("form");
     setPixData(null);
     setIsCheckoutOpen(true);
   };
@@ -115,7 +115,7 @@ export default function Home() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setComprador(prev => ({ ...prev, [name]: value }));
+    setComprador((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
@@ -139,7 +139,7 @@ export default function Home() {
 
       setPixData(data);
       setCountdown(data.tempoExpiracao);
-      setCheckoutStep('pix');
+      setCheckoutStep("pix");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocorreu um erro inesperado.");
     } finally {
@@ -157,7 +157,7 @@ export default function Home() {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
   if (isLoading && !rifa) {
@@ -204,38 +204,89 @@ export default function Home() {
           <DialogContent className="bg-gray-800 border-gray-700 text-white">
             <DialogHeader>
               <DialogTitle className="text-center text-xl">
-                {checkoutStep === 'form' ? 'Finalizar Compra' : 'Pague com PIX'}
+                {checkoutStep === "form" ? "Finalizar Compra" : "Pague com PIX"}
               </DialogTitle>
             </DialogHeader>
-            
+
             {error && <p className="text-red-500 text-sm text-center my-2">{error}</p>}
 
-            {checkoutStep === 'form' ? (
+            {checkoutStep === "form" ? (
               <form onSubmit={handleCheckoutSubmit} className="space-y-4 p-4">
-                <input type="text" name="nome" placeholder="Nome" required value={comprador.nome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input type="text" name="sobrenome" placeholder="Sobrenome" required value={comprador.sobrenome} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input type="email" name="email" placeholder="E-mail" required value={comprador.email} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <IMaskInput mask="(00) 00000-0000" value={comprador.telefone} onAccept={(value) => handleInputChange({ target: { name: 'telefone', value } } as any)} name="telefone" type="tel" placeholder="Telefone" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <IMaskInput mask="000.000.000-00" value={comprador.cpf} onAccept={(value) => handleInputChange({ target: { name: 'cpf', value } } as any)} name="cpf" type="text" placeholder="CPF" required className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <button type="submit" disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500">
-                  {isLoading ? 'Gerando PIX...' : `Pagar R$ ${valorTotal.toFixed(2)}`}
+                <input
+                  type="text"
+                  name="nome"
+                  placeholder="Nome"
+                  required
+                  value={comprador.nome}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <input
+                  type="text"
+                  name="sobrenome"
+                  placeholder="Sobrenome"
+                  required
+                  value={comprador.sobrenome}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="E-mail"
+                  required
+                  value={comprador.email}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <IMaskInput
+                  mask="(00) 00000-0000"
+                  value={comprador.telefone}
+                  onAccept={(value) => handleInputChange({ target: { name: "telefone", value } } as any)}
+                  name="telefone"
+                  type="tel"
+                  placeholder="Telefone"
+                  required
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <IMaskInput
+                  mask="000.000.000-00"
+                  value={comprador.cpf}
+                  onAccept={(value) => handleInputChange({ target: { name: "cpf", value } } as any)}
+                  name="cpf"
+                  type="text"
+                  placeholder="CPF"
+                  required
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500">
+                  {isLoading ? "Gerando PIX..." : `Pagar R$ ${valorTotal.toFixed(2)}`}
                 </button>
               </form>
-            ) : pixData && (
-              <div className="flex flex-col items-center p-4 text-center">
-                <p className="mb-2">Escaneie o QR Code para pagar:</p>
-                <Image src={pixData.qrCodeBase64} alt="PIX QR Code" width={256} height={256} />
-                <p className="mt-2 text-lg font-bold text-orange-400">Expira em: {formatTime(countdown)}</p>
-                
-                <p className="mt-4 mb-2">Ou use o PIX Copia e Cola:</p>
-                <div className="w-full bg-gray-700 p-2 rounded border border-gray-600">
-                  <p className="text-xs break-all">{pixData.pixCopiaECola}</p>
+            ) : (
+              pixData && (
+                <div className="flex flex-col items-center p-4 text-center">
+                  <p className="mb-2">Escaneie o QR Code para pagar:</p>
+                  <Image src={pixData.qrCodeBase64} alt="PIX QR Code" width={256} height={256} />
+                  <p className="mt-2 text-lg font-bold text-orange-400">Expira em: {formatTime(countdown)}</p>
+
+                  <p className="mt-4 mb-2">Ou use o PIX Copia e Cola:</p>
+                  <div className="w-full bg-gray-700 p-2 rounded border border-gray-600">
+                    <p className="text-xs break-all">{pixData.pixCopiaECola}</p>
+                  </div>
+                  <button
+                    onClick={copyToClipboard}
+                    className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Copiar Código
+                  </button>
+                  <p className="mt-4 text-sm text-gray-400">
+                    Após o pagamento, seus números serão enviados para o seu e-mail.
+                  </p>
                 </div>
-                <button onClick={copyToClipboard} className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                  Copiar Código
-                </button>
-                <p className="mt-4 text-sm text-gray-400">Após o pagamento, seus números serão enviados para o seu e-mail.</p>
-              </div>
+              )
             )}
           </DialogContent>
         </Dialog>
@@ -246,16 +297,11 @@ export default function Home() {
               <DialogTitle className="text-center text-xl text-orange-500">Login Necessário</DialogTitle>
             </DialogHeader>
             <div className="p-4 text-center">
-              <p className="mb-4">
-                Você precisa estar logado para participar.
-              </p>
-              <p>
-                Por favor, faça o login ou crie uma conta usando o ícone de avatar no canto superior da tela.
-              </p>
+              <p className="mb-4">Você precisa estar logado para participar.</p>
+              <p>Por favor, faça o login ou crie uma conta usando o ícone de avatar no canto superior da tela.</p>
               <button
                 onClick={() => setShowLoginRequired(false)}
-                className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
-              >
+                className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
                 Entendi
               </button>
             </div>

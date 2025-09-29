@@ -14,6 +14,14 @@ const formSchema = z.object({
   cpf: z.string().length(14, "CPF inválido"), // Formato xxx.xxx.xxx-xx
 });
 
+export interface FormularioCheckoutProps {
+  rifaId: string;
+  quantidade: number;
+  valorTotal: number;
+  carregando: boolean;
+  onSubmit?: (dados: any) => void; // se existir
+}
+
 type FormData = z.infer<typeof formSchema>;
 
 // Defina o tipo do usuário
@@ -24,11 +32,6 @@ export type Usuario = {
   telefone: string;
   cpf: string;
 };
-
-interface FormularioCheckoutProps {
-  rifaId: string;
-  quantidade: number;
-}
 
 const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quantidade }) => {
   const [formData, setFormData] = useState<FormData>({

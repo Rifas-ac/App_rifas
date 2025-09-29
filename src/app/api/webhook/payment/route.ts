@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEmail";
-import React, { useEffect, useState } from "react";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -61,22 +60,4 @@ export async function POST(req: Request) {
     console.error("Erro no webhook de pagamento:", error);
     return NextResponse.json({ message: "Erro interno do servidor." }, { status: 500 });
   }
-}
-
-const MeuComponente = () => {
-  const [dados, setDados] = useState<string | null>(null);
-
-  useEffect(() => {
-    buscarDados().then(setDados);
-  }, []);
-
-  if (!dados) return React.createElement("div", null, "Carregando...");
-  return React.createElement("div", null, dados);
-};
-
-// Definindo a função no arquivo
-async function buscarDados() {
-  // Sua lógica para buscar dados (exemplo)
-  const resposta = await fetch("/api/dados");
-  return resposta.json();
 }
