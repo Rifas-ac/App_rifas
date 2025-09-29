@@ -1,30 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const userEmail = searchParams.get("email");
+// Função utilitária para pegar o ID do usuário autenticado
+function getUserIdFromRequest(req: NextRequest): number | null {
+  const userId = req.cookies.get("userId")?.value;
+  return userId ? Number(userId) : null;
+}
 
-  if (!userEmail) {
-    return NextResponse.json({ error: "Email do usuário não fornecido" }, { status: 400 });
+export async function GET(req: NextRequest) {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
-
-  try {
-    const usuario = await prisma.usuario.findUnique({
-      where: { email: userEmail },
-      select: {
-        nome: true,
-        // Inclua outros campos que você deseja retornar para o cliente
-      },
-    });
-
-    if (!usuario) {
-      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
-    }
-
-    return NextResponse.json(usuario);
-  } catch (error) {
-    console.error("Erro ao buscar dados do usuário:", error);
-    return NextResponse.json({ error: "Erro interno ao buscar dados do usuário" }, { status: 500 });
+  const usuario = await prisma.usuario.findUnique({ where: { id: userId } });
+  if (!usuario) {
+    return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
   }
+  return NextResponse.json(usuario);
 }

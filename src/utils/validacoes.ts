@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * Utilitários de validação para formulários
  */
@@ -121,3 +123,8 @@ export function obterMensagemErroNome(nome: string): string | null {
 
   return null;
 }
+
+export const checkoutSchema = z.object({
+  rifaId: z.number(),
+  quantidade: z.number().min(1),
+});

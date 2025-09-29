@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EsqueciSenhaModal from "@/components/EsqueciSenhaModal";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [novaSenha, setNovaSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showEsqueciSenha, setShowEsqueciSenha] = useState(false);
 
   // Login normal
   const handleLogin = async (e: React.FormEvent) => {
@@ -82,41 +84,42 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
+            name="email"
             placeholder="E-mail"
             className="w-full p-2 rounded bg-gray-700 text-white"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <input
             type="password"
+            name="senha"
             placeholder="Senha"
             className="w-full p-2 rounded bg-gray-700 text-white"
             value={senha}
-            onChange={e => setSenha(e.target.value)}
+            onChange={(e) => setSenha(e.target.value)}
             required
           />
-          <button
-            type="submit"
-            className="w-full bg-orange-500 py-2 rounded text-white font-bold"
-            disabled={loading}
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
+
+          <div className="text-right mb-2">
+            <button
+              type="button"
+              className="text-blue-400 text-sm underline"
+              onClick={() => setShowEsqueciSenha(true)}
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <button type="submit" className="bg-orange-600 text-white px-4 py-2 rounded w-full" disabled={loading}>
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+            <button type="button" className="bg-gray-600 text-white px-4 py-2 rounded w-full">
+              Voltar
+            </button>
+          </div>
         </form>
-        <button
-          className="text-orange-400 underline mt-4 block mx-auto"
-          onClick={() => {
-            setShowForgot(true);
-            setMensagem("");
-            setCodigoEnviado(false);
-            setEmailRecuperacao("");
-            setCodigo("");
-            setNovaSenha("");
-          }}
-        >
-          Esqueci minha senha
-        </button>
         {mensagem && <p className="mt-4 text-center text-sm text-orange-300">{mensagem}</p>}
       </div>
 
@@ -133,14 +136,13 @@ export default function LoginPage() {
                 placeholder="Seu e-mail"
                 className="w-full p-2 rounded bg-gray-700"
                 value={emailRecuperacao}
-                onChange={e => setEmailRecuperacao(e.target.value)}
+                onChange={(e) => setEmailRecuperacao(e.target.value)}
                 required
               />
               <button
                 type="submit"
                 className="w-full bg-orange-500 py-2 rounded text-white font-bold"
-                disabled={loading}
-              >
+                disabled={loading}>
                 {loading ? "Enviando..." : "Enviar código"}
               </button>
             </form>
@@ -151,7 +153,7 @@ export default function LoginPage() {
                 placeholder="Código de 5 dígitos"
                 className="w-full p-2 rounded bg-gray-700"
                 value={codigo}
-                onChange={e => setCodigo(e.target.value)}
+                onChange={(e) => setCodigo(e.target.value)}
                 required
                 maxLength={5}
               />
@@ -160,27 +162,26 @@ export default function LoginPage() {
                 placeholder="Nova senha"
                 className="w-full p-2 rounded bg-gray-700"
                 value={novaSenha}
-                onChange={e => setNovaSenha(e.target.value)}
+                onChange={(e) => setNovaSenha(e.target.value)}
                 required
               />
               <button
                 type="submit"
                 className="w-full bg-orange-500 py-2 rounded text-white font-bold"
-                disabled={loading}
-              >
+                disabled={loading}>
                 {loading ? "Trocando..." : "Trocar senha"}
               </button>
             </form>
           )}
-          <button
-            className="mt-2 text-orange-400 underline"
-            onClick={() => setShowForgot(false)}
-          >
+          <button className="mt-2 text-orange-400 underline" onClick={() => setShowForgot(false)}>
             Cancelar
           </button>
           {mensagem && <p className="mt-4 text-center text-sm text-orange-300">{mensagem}</p>}
         </DialogContent>
       </Dialog>
+
+      {/* Modal Esqueci Senha */}
+      {showEsqueciSenha && <EsqueciSenhaModal onClose={() => setShowEsqueciSenha(false)} />}
     </div>
   );
 }

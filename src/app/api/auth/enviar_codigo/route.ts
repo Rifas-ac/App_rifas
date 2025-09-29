@@ -3,19 +3,22 @@ import { Resend } from "resend";
 import { prisma } from "@/lib/prisma"; // ajuste o caminho conforme seu projeto
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json();
+  const body = await req.json();
+  const email = body.email.trim().toLowerCase();
 
   // Gera código de 5 dígitos
   const codigo = Math.floor(10000 + Math.random() * 90000).toString();
 
   // Salva o código no banco (tabela usuario, campo resetCode e resetCodeExpires)
-  const user = await prisma.usuario.update({
-    where: { email },
-    data: {
-      resetCode: codigo,
-      resetCodeExpires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutos
-    },
-  }).catch(() => null);
+  const user = await prisma.usuario
+    .update({
+      where: { email },
+      data: {
+        resetCode: codigo,
+        resetCodeExpires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutos
+      },
+    })
+    .catch(() => null);
 
   if (!user) {
     return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });

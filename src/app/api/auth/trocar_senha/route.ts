@@ -6,20 +6,8 @@ export async function POST(req: NextRequest) {
   const { email, codigo, novaSenha } = await req.json();
 
   // Busca usuário e valida código e expiração
-  const user = await prisma.usuario.findUnique({
+  const user = await prisma.usuario.findFirst({
     where: { email },
-    select: {
-      id: true,
-      email: true,
-      senha: true,
-      resetCode: true,
-      resetCodeExpires: true,
-      nome: true,
-      sobrenome: true,
-      cpf: true,
-      telefone: true,
-      createdAt: true,
-    },
   });
 
   if (!user || user.resetCode !== codigo || !user.resetCodeExpires || new Date(user.resetCodeExpires) < new Date()) {
