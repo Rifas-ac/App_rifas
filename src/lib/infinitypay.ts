@@ -1,10 +1,10 @@
-import axios from 'axios';
+import axios from "axios";
 
 const infinityPayApi = axios.create({
-  baseURL: 'https://api.infinitypay.io/v1', // A more realistic guess for the API URL
+  baseURL: "https://api.infinitypay.io/v1",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.INFINITY_PAY_API_KEY}`,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.INFINITY_PAY_API_KEY}`,
   },
 });
 
@@ -16,7 +16,7 @@ export interface CreateChargeRequest {
     tax_id: string; // CPF
   };
   description: string;
-  payment_method: 'pix';
+  payment_method: "pix";
   expires_in: number; // in seconds
 }
 
@@ -41,7 +41,7 @@ export const createPixCharge = async (chargeData: CreateChargeRequest): Promise<
 
     return Promise.resolve(response);
   } catch (error) {
-    console.error('Error creating PIX charge with Infinity Pay:', error);
-    throw new Error('Failed to create PIX charge with Infinity Pay.');
+    console.error("Error creating PIX charge with Infinity Pay:", error);
+    throw new Error("Failed to create PIX charge with Infinity Pay.");
   }
 };
