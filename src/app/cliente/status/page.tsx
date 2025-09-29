@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEmail";
+import React, { useEffect, useState } from "react";
 
 // Função executada no servidor para confirmar o pagamento
 async function confirmarPagamento(sessionId: string) {
@@ -45,7 +46,8 @@ async function confirmarPagamento(sessionId: string) {
       await resend.emails.send({
         from: "Garagem VW <onboarding@resend.dev>",
         to: [usuario.email],
-        subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,        react: ConfirmacaoCompraEmail({
+        subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
+        react: await ConfirmacaoCompraEmail({
           nomeUsuario: usuario.nome,
           numerosComprados: ticketsAtualizados.map((t) => t.numero),
           tituloRifa: rifa.titulo,
@@ -65,9 +67,30 @@ async function confirmarPagamento(sessionId: string) {
   });
 }
 
-export default async function StatusPage({ searchParams }: { searchParams: { session_id: string } }) {
-  const { session_id } = searchParams;
-  const tickets = await confirmarPagamento(session_id);
+interface PageProps {
+  searchParams?: { session_id?: string };
+}
+
+const Page = ({ searchParams }: { searchParams: { session_id?: string } }) => {
+  const session_id = searchParams?.session_id;
+  const [tickets, setTickets] = useState<any[] | null>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await confirmarPagamento(session_id || "");
+      setTickets(response);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [session_id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gray-900 text-white">Carregando...</div>
+    );
+  }
 
   if (!tickets || tickets.length === 0) {
     return (
@@ -76,7 +99,8 @@ export default async function StatusPage({ searchParams }: { searchParams: { ses
           <ShoppingCart className="w-16 h-16 text-orange-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-center mb-4">Compra não encontrada</h1>
           <p className="text-gray-300 mb-8">
-            Não foi possível localizar os detalhes da sua compra. Se você concluiu o pagamento, por favor, verifique seu e-mail ou entre em contato com o suporte.
+            Não foi possível localizar os detalhes da sua compra. Se você concluiu o pagamento, por favor, verifique seu
+            e-mail ou entre em contato com o suporte.
           </p>
           <Link href="/">
             <span className="w-full inline-block bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors">
@@ -93,7 +117,9 @@ export default async function StatusPage({ searchParams }: { searchParams: { ses
       <div className="w-full max-w-2xl bg-gray-800 shadow-lg rounded-lg p-8 text-center">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-center mb-4">Pagamento Aprovado!</h1>
-        <p className="text-gray-300 mb-8">Sua compra foi confirmada com sucesso. Abaixo estão seus números da sorte. Boa sorte!</p>
+        <p className="text-gray-300 mb-8">
+          Sua compra foi confirmada com sucesso. Abaixo estão seus números da sorte. Boa sorte!
+        </p>
 
         <div className="bg-gray-700 rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Rifa: {tickets[0].rifa.titulo}</h2>
@@ -115,4 +141,6 @@ export default async function StatusPage({ searchParams }: { searchParams: { ses
       </div>
     </div>
   );
-}
+};
+
+export default Page;
