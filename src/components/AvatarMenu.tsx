@@ -76,7 +76,7 @@ export default function AvatarMenu() {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), senha }),
       });
 
       if (response.ok) {

@@ -4,26 +4,24 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, senha } = body;
+    const email = body.email.trim().toLowerCase();
+    const senha = body.senha; // Se quiser, pode usar .trim() também
 
-    if (!email || !senha) {
-      return NextResponse.json({ error: "E-mail e senha são obrigatórios." }, { status: 400 });
-    }
-
-    const user = await prisma.usuario.findUnique({
+    // Procure o usuário normalizando o e-mail
+    const usuario = await prisma.usuario.findUnique({
       where: { email },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: "email" }, { status: 404 }); // Usuário não encontrado
+    if (!usuario) {
+      return NextResponse.json({ message: "Credenciais inválidas." }, { status: 401 });
     }
 
-    // ATENÇÃO: Em uma aplicação real, aqui você compararia senhas criptografadas
-    if (user.senha !== senha) {
-      return NextResponse.json({ error: "senha" }, { status: 401 }); // Senha incorreta
+    // Compare a senha normalmente (ou com hash, se usar hash)
+    if (usuario.senha !== senha) {
+      return NextResponse.json({ message: "Credenciais inválidas." }, { status: 401 });
     }
 
-    return NextResponse.json({ success: true, user: { id: user.id, nome: user.nome, email: user.email } });
+    return NextResponse.json({ message: "Login realizado com sucesso!" });
   } catch (error) {
     console.error("Erro no login:", error);
     return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
