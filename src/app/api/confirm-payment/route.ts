@@ -7,16 +7,19 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
-    const { sessionId } = await req.json();
+    const { sessionId, paymentId } = await req.json();
 
-    if (!sessionId) {
-      return NextResponse.json({ error: "Session ID não fornecido" }, { status: 400 });
+    if (!sessionId && !paymentId) {
+      return NextResponse.json({ error: "Session ID ou Payment ID deve ser fornecido" }, { status: 400 });
     }
 
     // Tenta atualizar os tickets e enviar o e-mail
     await prisma.$transaction(async (tx) => {
       const tickets = await tx.ticket.findMany({
-        where: { checkoutSessionId: sessionId, status: "reservado" },
+        where: { 
+          paymentId: paymentId || sessionId,
+          status: "reservado" 
+        },
         include: { usuario: true, rifa: true },
       });
 
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     // Após a transação, busca todos os tickets (agora pagos) para retornar
     const ticketsPagos = await prisma.ticket.findMany({
-      where: { checkoutSessionId: sessionId },
+      where: { paymentId: paymentId || sessionId },
       include: { rifa: true },
       orderBy: { numero: "asc" },
     });
@@ -55,9 +58,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error(`Falha ao confirmar pagamento:`, error);
     // Mesmo que o e-mail falhe, tentamos retornar os tickets se já foram pagos
-    const { sessionId } = await req.json();
+    const { sessionId, paymentId } = await req.json();
     const tickets = await prisma.ticket.findMany({
-      where: { checkoutSessionId: sessionId, status: "pago" },
+      where: { paymentId: paymentId || sessionId, status: "pago" },
       include: { rifa: true },
       orderBy: { numero: "asc" },
     });

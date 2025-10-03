@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
-    "axios": "^1.10.0",
+    "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -30,7 +30,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
-    "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.16.3",
     "@tailwindcss/postcss": "^4.0.0-alpha.13",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
@@ -38,7 +38,7 @@
     "@types/react": "^19.1.15",
     "@types/react-dom": "^19.1.9",
     "@types/react-input-mask": "^3.0.6",
-    "prisma": "^6.16.2",
+    "prisma": "^6.16.3",
     "tailwindcss": "^4",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",

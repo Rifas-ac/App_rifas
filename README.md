@@ -148,7 +148,8 @@ O arquivo `.env` é usado para configurar a aplicação. Aqui está uma descriç
 | Variável                    | Descrição                                                                   | Exemplo no .env.example                                          |
 | --------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `DATABASE_URL`              | A string de conexão completa para o banco de dados PostgreSQL               | `postgresql://devuser:devpassword@db:5432/rifa_db?schema=public` |
-| `MERCADO_PAGO_ACCESS_TOKEN` | Token secreto para se comunicar com a API do Mercado Pago. **Não comitar!** | `COLOQUE_SEU_TOKEN_AQUI`                                         |
+| `ASAAS_API_KEY`             | Token secreto para se comunicar com a API da Asaas. **Não comitar!**        | `COLOQUE_SEU_TOKEN_ASAAS_AQUI`                                   |
+| `ASAAS_WEBHOOK_SECRET`      | Chave secreta para verificar webhooks da Asaas. **Não comitar!**            | `COLOQUE_SUA_CHAVE_SECRETA_AQUI`                                 |
 | `NEXT_PUBLIC_API_URL`       | URL pública da nossa API (usada no frontend)                                | `http://localhost:3000`                                          |
 
 ## 📁 Estrutura de Pastas
