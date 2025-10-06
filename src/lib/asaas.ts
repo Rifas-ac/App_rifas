@@ -59,34 +59,43 @@ export const findOrCreateCustomer = async (usuario: Usuario): Promise<string> =>
 };
 
 /**
- * Cria uma nova cobrança PIX na Asaas.
+ * Cria uma nova cobrança na Asaas com redirecionamento.
  * @param customerId - O ID do cliente na Asaas.
  * @param value - O valor da cobrança.
  * @param description - A descrição da cobrança.
- * @returns Os dados da cobrança PIX gerada.
+ * @returns Os dados da cobrança incluindo URL de pagamento.
  */
-export const createPixCharge = async (customerId: string, value: number, description: string) => {
+export const createCharge = async (customerId: string, value: number, description: string) => {
   try {
     const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 1); // Vencimento para amanhã
+    dueDate.setDate(dueDate.getDate() + 7); // Vencimento em 7 dias
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    // Primeiro cria a cobrança
     const { data: payment } = await asaasAPI.post("/payments", {
       customer: customerId,
-      billingType: "PIX",
+      billingType: "UNDEFINED", // Permite PIX, boleto, cartão na tela do Asaas
       value,
       dueDate: dueDate.toISOString().split("T")[0],
       description,
     });
 
-    // Após criar a cobrança, busca o QR Code
-    const { data: qrCodeData } = await asaasAPI.get(`/payments/${payment.id}/pixQrCode`);
+    // Agora atualiza com a URL de sucesso usando o ID do pagamento
+    await asaasAPI.put(`/payments/${payment.id}`, {
+      callback: {
+        successUrl: `${siteUrl}/payment/success?payment_id=${payment.id}`,
+        autoRedirect: true,
+      },
+    });
 
     return {
       paymentId: payment.id,
-      ...qrCodeData,
+      paymentUrl: `https://www.asaas.com/c/${payment.id}`,
+      invoiceUrl: payment.invoiceUrl,
     };
   } catch (error: any) {
-    console.error("Erro ao criar cobrança PIX na Asaas:", error.response?.data || error.message);
-    throw new Error("Falha ao gerar a cobrança PIX.");
+    console.error("Erro ao criar cobrança na Asaas:", error.response?.data || error.message);
+    throw new Error("Falha ao gerar a cobrança.");
   }
 };
