@@ -52,3 +52,18 @@ export async function geradorDeNumeros(
 
   return Array.from(numerosGerados);
 }
+
+/**
+ * Gera números únicos a partir de uma lista de números disponíveis
+ * @param quantidade - Quantidade de números a gerar
+ * @param numerosDisponiveis - Array com os números disponíveis
+ * @returns Array com os números escolhidos
+ */
+export function gerarNumerosUnicos(quantidade: number, numerosDisponiveis: number[]): number[] {
+  const shuffled = [...numerosDisponiveis].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, quantidade);
+}
+  }
+
+return Array.from(numerosGerados);
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEmail";
+import type { Prisma } from "@prisma/client";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -14,11 +15,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Tenta atualizar os tickets e enviar o e-mail
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const tickets = await tx.ticket.findMany({
-        where: { 
+        where: {
           paymentId: paymentId || sessionId,
-          status: "reservado" 
+          status: "reservado"
         },
         include: { usuario: true, rifa: true },
       });
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       }
 
       await tx.ticket.updateMany({
-        where: { id: { in: tickets.map((t) => t.id) } },
+        where: { id: { in: tickets.map((t: { id: number }) => t.id) } },
         data: { status: "pago" },
       });
 
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
         subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
         react: await ConfirmacaoCompraEmail({
           nomeUsuario: usuario.nome,
-          numerosComprados: tickets.map((t) => t.numero),
+          numerosComprados: tickets.map((t: { numero: string }) => t.numero),
           tituloRifa: rifa.titulo,
         }),
       });

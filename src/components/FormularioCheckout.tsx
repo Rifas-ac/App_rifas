@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { buscarUsuarioLogado } from "@/lib/api";
-import FormularioCheckout from "./FormularioCheckout";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -33,7 +32,7 @@ export type Usuario = {
   cpf: string;
 };
 
-const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quantidade }) => {
+const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quantidade, valorTotal, carregando, onSubmit }) => {
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     sobrenome: "",
@@ -42,8 +41,7 @@ const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quant
     cpf: "",
   });
   const [errors, setErrors] = useState<z.ZodError<FormData> | null>(null);
-  const [carregando, setCarregando] = useState(false);
-  const [valorTotal, setValorTotal] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -60,10 +58,6 @@ const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quant
       .catch(() => router.push("/login"));
   }, [router]);
 
-  useEffect(() => {
-    setValorTotal(quantidade * 11.97); // ajuste conforme sua lógica
-  }, [quantidade]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -73,18 +67,22 @@ const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quant
     const result = formSchema.safeParse(formData);
     if (result.success) {
       setErrors(null);
-      setCarregando(true);
-      try {
-        await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rifaId, quantidade }),
-        });
-        // ...restante do fluxo...
-      } catch (error) {
-        console.error("Erro ao realizar o checkout:", error);
-      } finally {
-        setCarregando(false);
+      if (onSubmit) {
+        onSubmit(formData);
+      } else {
+        setIsSubmitting(true);
+        try {
+          await fetch("/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rifaId, quantidade, comprador: formData }),
+          });
+          // ...restante do fluxo...
+        } catch (error) {
+          console.error("Erro ao realizar o checkout:", error);
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     } else {
       setErrors(result.error);
@@ -179,9 +177,9 @@ const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quant
           </div>
           <button
             type="submit"
-            disabled={carregando}
+            disabled={carregando || isSubmitting}
             className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
-            {carregando ? "Gerando PIX..." : "Gerar PIX"}
+            {(carregando || isSubmitting) ? "Gerando PIX..." : "Gerar PIX"}
           </button>
         </form>
       </div>

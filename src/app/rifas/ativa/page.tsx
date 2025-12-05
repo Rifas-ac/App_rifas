@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Rifa } from "@prisma/client";
+import type { Rifa, Ticket } from "@/types";
 import FormularioCheckout from "@/components/FormularioCheckout";
 import QrCodeDisplay from "@/components/QrCodeDisplay";
 import RifaCard from "@/components/RifaCard"; // Assuming this component is still useful for displaying raffle info
 
-type RifaComTickets = Rifa & { tickets: { status: string }[] };
+type RifaComTickets = Rifa & { tickets: Ticket[] };
 
 type PageState = "FORM" | "LOADING" | "ERROR" | "QR_CODE";
 
@@ -100,7 +100,7 @@ export default function RifaAtivaPage() {
           quantidade={quantidade}
           setQuantidade={setQuantidade}
           valorTotal={valorTotal}
-          onParticipate={() => {}} // This will be handled by the form now
+          onParticipate={() => { }} // This will be handled by the form now
           onPromocaoClick={() => setQuantidade(10)}
           isProcessing={pageState === "LOADING"}
         />

@@ -37,7 +37,6 @@ model Usuario {
   createdAt        DateTime  @default(now())
   resetCode        String?
   resetCodeExpires DateTime?
-  asaasCustomerId  String?   @unique // NOVO: ID do cliente na Asaas
   tickets          Ticket[]
 }
 

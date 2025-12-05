@@ -1,32 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Rifa } from "@prisma/client";
+import type { Rifa, Ticket, RifaComTickets, DadosCheckout, PixData } from "@/types";
 import RifaCard from "@/components/RifaCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NotaInformativa from "@/components/NotaInformativa";
+import LoginRequiredPopup from "@/components/LoginRequiredPopup";
+import SucessoCompraPopup from "@/components/SucessoCompraPopup";
 import Image from "next/image";
 import { IMaskInput } from "react-imask";
 import Cookies from "js-cookie";
-
-// Tipos
-type RifaComTickets = Rifa & { tickets: { status: string }[] };
-
-interface DadosCheckout {
-  nome: string;
-  sobrenome: string;
-  email: string;
-  telefone: string;
-  cpf: string;
-}
-
-interface PixData {
-  qrCodeBase64: string;
-  pixCopiaECola: string;
-  transactionId: string;
-  valorTotal: number;
-  tempoExpiracao: number;
-}
 
 export default function Home() {
   const [rifa, setRifa] = useState<RifaComTickets | null>(null);
@@ -39,6 +22,8 @@ export default function Home() {
   const [showNumbers, setShowNumbers] = useState(false);
   const [numerosGerados, setNumerosGerados] = useState<number[]>([]);
   const [showLoginRequired, setShowLoginRequired] = useState(false);
+  const [showSucessoPopup, setShowSucessoPopup] = useState(false);
+  const [paymentIdPolling, setPaymentIdPolling] = useState<string | null>(null);
 
   // Novos estados para o fluxo PIX
   const [checkoutStep, setCheckoutStep] = useState<"form" | "pix">("form");
@@ -86,6 +71,43 @@ export default function Home() {
     }
   }, [countdown]);
 
+  // Efeito para verificar status do pagamento periodicamente
+  useEffect(() => {
+    if (!paymentIdPolling) return;
+
+    const checkPaymentStatus = async () => {
+      try {
+        const response = await fetch(`/api/pagamento/status?paymentId=${paymentIdPolling}`);
+        const data = await response.json();
+
+        if (data.status === "approved" && data.tickets.length > 0) {
+          // Pagamento aprovado!
+          const numeros = data.tickets.map((t: any) => t.numero);
+          setNumerosGerados(numeros);
+          setIsCheckoutOpen(false);
+          setShowSucessoPopup(true);
+          setPaymentIdPolling(null); // Para o polling
+        }
+      } catch (error) {
+        console.error("Erro ao verificar status:", error);
+      }
+    };
+
+    // Verifica a cada 3 segundos
+    const interval = setInterval(checkPaymentStatus, 3000);
+
+    // Limpa o intervalo após 30 minutos (expiração do PIX)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      setPaymentIdPolling(null);
+    }, 30 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [paymentIdPolling]);
+
   // Abre o modal e reseta o estado do checkout
   const handleParticipate = () => {
     const userType = Cookies.get("userType");
@@ -95,7 +117,7 @@ export default function Home() {
     }
 
     if (!rifa) return;
-    const ticketsDisponiveis = rifa.totalNumeros - rifa.tickets.filter((t) => t.status === "pago").length;
+    const ticketsDisponiveis = rifa.totalNumeros - rifa.tickets.filter((t: { status: string }) => t.status === "pago").length;
     if (quantidade > ticketsDisponiveis) {
       setError(`Apenas ${ticketsDisponiveis} números estão disponíveis.`);
       return;
@@ -140,6 +162,9 @@ export default function Home() {
       setPixData(data);
       setCountdown(data.tempoExpiracao);
       setCheckoutStep("pix");
+
+      // Inicia o polling para verificar pagamento
+      setPaymentIdPolling(data.transactionId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocorreu um erro inesperado.");
     } finally {
@@ -291,22 +316,21 @@ export default function Home() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showLoginRequired} onOpenChange={setShowLoginRequired}>
-          <DialogContent className="bg-gray-800 border-gray-700 text-white">
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl text-orange-500">Login Necessário</DialogTitle>
-            </DialogHeader>
-            <div className="p-4 text-center">
-              <p className="mb-4">Você precisa estar logado para participar.</p>
-              <p>Por favor, faça o login ou crie uma conta usando o ícone de avatar no canto superior da tela.</p>
-              <button
-                onClick={() => setShowLoginRequired(false)}
-                className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
-                Entendi
-              </button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <LoginRequiredPopup
+          isOpen={showLoginRequired}
+          onClose={() => setShowLoginRequired(false)}
+        />
+
+        <SucessoCompraPopup
+          isOpen={showSucessoPopup}
+          onClose={() => {
+            setShowSucessoPopup(false);
+            setNumerosGerados([]);
+            setQuantidade(3);
+          }}
+          numerosGerados={numerosGerados}
+          tituloRifa={rifa.titulo}
+        />
       </div>
     </div>
   );
