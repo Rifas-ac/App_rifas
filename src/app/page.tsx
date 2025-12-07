@@ -78,20 +78,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black">
-      {/* Botão de Login - Bem no topo */}
-      <div className="fixed top-2 left-1/2 transform -translate-x-1/2 z-50">
-        <button
-          onClick={() => router.push('/login')}
-          className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white p-3 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 flex items-center gap-2 group"
-          title="Fazer Login"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span className="hidden md:inline-block text-sm font-semibold pr-2">Login</span>
-        </button>
-      </div>
-
       <div className="container mx-auto px-4 py-12 max-w-7xl">
         {/* Banner de Boas-Vindas */}
         <div className="text-center mb-16 px-4">

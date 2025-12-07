@@ -55,8 +55,11 @@ const ModalFinalizarCompra: React.FC<FormularioCheckoutProps> = ({ rifaId, quant
           cpf: usuario.cpf || "",
         });
       })
-      .catch(() => router.push("/login"));
-  }, [router]);
+      .catch(() => {
+        // Usuário não logado - mantém formulário vazio para preenchimento manual
+        console.log("Usuário não logado, aguardando preenchimento manual do formulário");
+      });
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

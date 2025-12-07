@@ -1,189 +1,313 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import type { Rifa, Ticket } from "@/types";
-import FormularioCheckout from "@/components/FormularioCheckout";
-import QrCodeDisplay from "@/components/QrCodeDisplay";
-import CarrosselGol from "@/components/CarrosselGol";
-import QuantidadeSelector from "@/components/QuantidadeSelector";
+import { Rifa } from "@prisma/client";
+import RifaCard from "@/components/RifaCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import NotaInformativa from "@/components/NotaInformativa";
+import Image from "next/image";
+import { IMaskInput } from "react-imask";
+import Cookies from "js-cookie";
 
-type RifaComTickets = Rifa & { tickets: Ticket[] };
+type RifaComTickets = Rifa & { tickets: { status: string }[] };
 
-type PageState = "FORM" | "LOADING" | "ERROR" | "QR_CODE";
+interface DadosCheckout {
+  nome: string;
+  sobrenome: string;
+  email: string;
+  telefone: string;
+  cpf: string;
+}
 
-interface QrCodeData {
+interface PixData {
   qrCodeBase64: string;
-  pixCode: string;
-  expiresAt: string;
+  pixCopiaECola: string;
+  transactionId: string;
+  valorTotal: number;
+  tempoExpiracao: number;
 }
 
 export default function GolPage() {
   const [rifa, setRifa] = useState<RifaComTickets | null>(null);
-  const [pageState, setPageState] = useState<PageState>("FORM");
-  const [qrCodeData, setQrCodeData] = useState<QrCodeData | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [quantidade, setQuantidade] = useState(3);
+  const [valorTotal, setValorTotal] = useState(0);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showNumbers, setShowNumbers] = useState(false);
+  const [numerosGerados, setNumerosGerados] = useState<number[]>([]);
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
+
+  const [checkoutStep, setCheckoutStep] = useState<"form" | "pix">("form");
+  const [pixData, setPixData] = useState<PixData | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [comprador, setComprador] = useState<DadosCheckout>({
+    nome: "",
+    sobrenome: "",
+    email: "",
+    telefone: "",
+    cpf: "",
+  });
 
   useEffect(() => {
-    const fetchRifaGol = async () => {
+    const fetchRifaAtiva = async () => {
+      setIsLoading(true);
       try {
-        // Buscar especificamente a rifa do Gol
-        const response = await fetch("/api/rifas");
-        if (!response.ok) {
-          throw new Error("Erro ao carregar rifas.");
-        }
-        const rifas: RifaComTickets[] = await response.json();
-        const rifaGol = rifas.find(r => r.titulo.includes("Gol"));
-
-        if (!rifaGol) {
-          throw new Error("Rifa do Gol não encontrada.");
-        }
-
-        setRifa(rifaGol);
+        const response = await fetch("/api/rifas/ativa");
+        if (!response.ok) throw new Error("Nenhuma rifa ativa encontrada.");
+        const data: RifaComTickets = await response.json();
+        setRifa(data);
       } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : "Erro ao carregar a rifa.");
-        setPageState("ERROR");
+        setError(err instanceof Error ? err.message : "Erro ao carregar a rifa.");
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchRifaGol();
+    fetchRifaAtiva();
   }, []);
 
-  const handleCheckoutSubmit = async (comprador: any) => {
+  useEffect(() => {
+    if (rifa) {
+      const valorUnitario = quantidade >= 10 ? 3.79 : rifa.valorCota;
+      setValorTotal(quantidade * valorUnitario);
+    }
+  }, [quantidade, rifa]);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const handleParticipate = () => {
+    const userType = Cookies.get("userType");
+    if (!userType) {
+      setShowLoginRequired(true);
+      return;
+    }
+
     if (!rifa) return;
-    setPageState("LOADING");
-    setErrorMessage(null);
+    const ticketsDisponiveis = rifa.totalNumeros - rifa.tickets.filter((t) => t.status === "pago").length;
+    if (quantidade > ticketsDisponiveis) {
+      setError(`Apenas ${ticketsDisponiveis} números estão disponíveis.`);
+      return;
+    }
+    setError(null);
+    setCheckoutStep("form");
+    setPixData(null);
+    setIsCheckoutOpen(true);
+  };
+
+  const handleReset = () => {
+    setShowSuccess(false);
+    setShowNumbers(false);
+    setNumerosGerados([]);
+    setQuantidade(3);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setComprador((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rifa) return;
+    setIsLoading(true);
+    setError(null);
 
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rifaId: rifa.id,
-          quantidade,
-          comprador,
-        }),
+        body: JSON.stringify({ rifaId: rifa.id, quantidade, comprador }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Falha ao gerar o PIX.");
+        throw new Error(data.message || "Falha ao gerar cobrança PIX.");
       }
 
-      setQrCodeData(data);
-      setPageState("QR_CODE");
+      setPixData(data);
+      setCountdown(data.tempoExpiracao);
+      setCheckoutStep("pix");
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Ocorreu um erro inesperado.");
-      setPageState("ERROR");
+      setError(err instanceof Error ? err.message : "Ocorreu um erro inesperado.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (!rifa) {
+  const copyToClipboard = () => {
+    if (pixData?.pixCopiaECola) {
+      navigator.clipboard.writeText(pixData.pixCopiaECola);
+      alert("Código PIX copiado para a área de transferência!");
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
+  if (isLoading && !rifa) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
-        {errorMessage ? (
-          <div className="bg-red-900/50 border border-red-700 p-6 rounded-lg text-center">
-            <h2 className="text-xl font-bold mb-2">Ops! Algo deu errado.</h2>
-            <p>{errorMessage}</p>
-          </div>
-        ) : (
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500"></div>
-        )}
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500"></div>
       </div>
     );
   }
 
-  const valorTotal = rifa.valorCota * quantidade;
+  if (error && !isCheckoutOpen) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white p-4">
+        <div className="bg-red-900/50 border border-red-700 p-6 rounded-lg text-center">
+          <h2 className="text-xl font-bold mb-2">Ops! Algo deu errado.</h2>
+          <p>{error}</p>
+          <a href="/" className="mt-4 inline-block text-blue-400 hover:underline">Voltar para Home</a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!rifa) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="max-w-lg mx-auto">
-        {/* Carrossel do Gol */}
-        <CarrosselGol />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <div className="max-w-md mx-auto mb-4 flex justify-between items-center">
+        <a href="/" className="text-gray-400 hover:text-white text-sm flex items-center gap-1">
+          ← Voltar para Home
+        </a>
+      </div>
 
-        {/* Informações da Rifa */}
-        <div className="bg-gray-800 p-6 space-y-6">
-          {/* Título e Sorteio */}
-          <div className="text-white">
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-2xl font-bold">{rifa.titulo} Pode Ser Sua</h1>
-              <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                APENAS R$ {rifa.valorCota.toFixed(2)}
-              </span>
+      <div className="max-w-md mx-auto">
+        <RifaCard
+          quantidade={quantidade}
+          setQuantidade={setQuantidade}
+          valorTotal={valorTotal}
+          onParticipate={handleParticipate}
+          onPromocaoClick={() => setQuantidade(10)}
+          isProcessing={isLoading && isCheckoutOpen}
+          showSuccess={showSuccess}
+          onReset={handleReset}
+          showNumbers={showNumbers}
+          numerosGerados={numerosGerados}
+        />
+        <NotaInformativa showNumbers={false} />
+
+        <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl">
+                {checkoutStep === "form" ? "Finalizar Compra" : "Pague com PIX"}
+              </DialogTitle>
+            </DialogHeader>
+
+            {error && <p className="text-red-500 text-sm text-center my-2">{error}</p>}
+
+            {checkoutStep === "form" ? (
+              <form onSubmit={handleCheckoutSubmit} className="space-y-4 p-4">
+                <input
+                  type="text"
+                  name="nome"
+                  placeholder="Nome"
+                  required
+                  value={comprador.nome}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <input
+                  type="text"
+                  name="sobrenome"
+                  placeholder="Sobrenome"
+                  required
+                  value={comprador.sobrenome}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="E-mail"
+                  required
+                  value={comprador.email}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <IMaskInput
+                  mask="(00) 00000-0000"
+                  value={comprador.telefone}
+                  onAccept={(value) => handleInputChange({ target: { name: "telefone", value } } as any)}
+                  name="telefone"
+                  type="tel"
+                  placeholder="Telefone"
+                  required
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <IMaskInput
+                  mask="000.000.000-00"
+                  value={comprador.cpf}
+                  onAccept={(value) => handleInputChange({ target: { name: "cpf", value } } as any)}
+                  name="cpf"
+                  type="text"
+                  placeholder="CPF"
+                  required
+                  className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500">
+                  {isLoading ? "Gerando PIX..." : `Pagar R$ ${valorTotal.toFixed(2)}`}
+                </button>
+              </form>
+            ) : (
+              pixData && (
+                <div className="flex flex-col items-center p-4 text-center">
+                  <p className="mb-2">Escaneie o QR Code para pagar:</p>
+                  <Image src={pixData.qrCodeBase64} alt="PIX QR Code" width={256} height={256} />
+                  <p className="mt-2 text-lg font-bold text-orange-400">Expira em: {formatTime(countdown)}</p>
+
+                  <p className="mt-4 mb-2">Ou use o PIX Copia e Cola:</p>
+                  <div className="w-full bg-gray-700 p-2 rounded border border-gray-600">
+                    <p className="text-xs break-all">{pixData.pixCopiaECola}</p>
+                  </div>
+                  <button
+                    onClick={copyToClipboard}
+                    className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Copiar Código
+                  </button>
+                  <p className="mt-4 text-sm text-gray-400">
+                    Após o pagamento, seus números serão enviados para o seu e-mail.
+                  </p>
+                </div>
+              )
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showLoginRequired} onOpenChange={setShowLoginRequired}>
+          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl text-orange-500">Login Necessário</DialogTitle>
+            </DialogHeader>
+            <div className="p-4 text-center">
+              <p className="mb-4">Você precisa estar logado para participar.</p>
+              <p>Por favor, faça o login ou crie uma conta usando o ícone de avatar no canto superior da tela.</p>
+              <button
+                onClick={() => setShowLoginRequired(false)}
+                className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
+                Entendi
+              </button>
             </div>
-            <p className="text-gray-300 flex items-center gap-2">
-              🏆 Sorteio: Loteria Federal
-            </p>
-          </div>
-
-          {/* Meus Títulos */}
-          <button
-            className="w-full bg-gray-700 text-white border border-gray-600 hover:bg-gray-600 px-4 py-2 rounded-lg transition-colors"
-          >
-            🛒 Meus títulos
-          </button>
-
-          {/* Seletor de Quantidade */}
-          <div>
-            <h3 className="text-white font-semibold mb-3">Selecione a quantidade</h3>
-            <QuantidadeSelector quantidade={quantidade} setQuantidade={setQuantidade} />
-          </div>
-
-          {/* Botão Participar */}
-          <button
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg py-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={pageState === "LOADING"}
-          >
-            Participar R$ {valorTotal.toFixed(2)}
-          </button>
-
-          {/* Prêmio da Campanha */}
-          <div className="bg-gray-700 rounded-lg p-4 text-white">
-            <h3 className="font-semibold mb-2">🏆 Prêmio dessa campanha</h3>
-            <p className="text-sm text-gray-300">{rifa.descricao}</p>
-          </div>
-
-          {/* Informação sobre números */}
-          <p className="text-center text-gray-400 text-sm">
-            Os números serão gerados automaticamente e aleatoriamente após a compra
-          </p>
-
-          {/* Detalhes da Compra */}
-          <div className="bg-gray-700 rounded-lg p-4 text-white">
-            <h3 className="font-semibold mb-3">Detalhes da compra:</h3>
-            <ul className="space-y-2 text-sm text-gray-300">
-              <li>• Quantidade: {quantidade} números</li>
-              <li>• Valor unitário: R$ {rifa.valorCota.toFixed(2)}</li>
-              <li>• Total: R$ {valorTotal.toFixed(2)}</li>
-              <li>• Mínimo obrigatório: 3 números</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Formulário de Checkout / QR Code */}
-        <div className="bg-gray-800 p-6 mt-4">
-          {pageState === "FORM" && (
-            <FormularioCheckout
-              rifaId={String(rifa.id)}
-              quantidade={quantidade}
-              valorTotal={valorTotal}
-              onSubmit={handleCheckoutSubmit}
-              carregando={false}
-            />
-          )}
-          {pageState === "LOADING" && (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500"></div>
-            </div>
-          )}
-          {pageState === "QR_CODE" && qrCodeData && <QrCodeDisplay {...qrCodeData} />}
-          {pageState === "ERROR" && errorMessage && (
-            <div className="bg-red-900/50 border border-red-700 p-6 rounded-lg text-center">
-              <h2 className="text-xl font-bold mb-2 text-white">Ops! Algo deu errado.</h2>
-              <p className="text-gray-300">{errorMessage}</p>
-            </div>
-          )}
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
