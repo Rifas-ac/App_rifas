@@ -1,6 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+export async function GET() {
+  try {
+    const rifas = await prisma.rifa.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        tickets: true,
+      },
+    });
+    return NextResponse.json(rifas);
+  } catch (error) {
+    console.error("Erro ao buscar rifas:", error);
+    return NextResponse.json({ error: "Erro ao buscar rifas" }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const body = await request.json();
   const { titulo, descricao, imagemUrl, premio, valorCota, dataSorteio, totalNumeros } = body;

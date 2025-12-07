@@ -3,7 +3,7 @@ import type { Usuario } from "@/types";
 
 // Configuração do cliente do Mercado Pago
 const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN || "",
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
   options: {
     timeout: 5000,
   },

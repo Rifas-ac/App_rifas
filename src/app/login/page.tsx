@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import EsqueciSenhaModal from "@/components/EsqueciSenhaModal";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showForgot, setShowForgot] = useState(false);
@@ -14,7 +15,6 @@ export default function LoginPage() {
   const [novaSenha, setNovaSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showEsqueciSenha, setShowEsqueciSenha] = useState(false);
 
   // Login normal
   const handleLogin = async (e: React.FormEvent) => {
@@ -105,7 +105,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="text-blue-400 text-sm underline"
-              onClick={() => setShowEsqueciSenha(true)}
+              onClick={() => setShowForgot(true)}
             >
               Esqueci minha senha
             </button>
@@ -115,11 +115,29 @@ export default function LoginPage() {
             <button type="submit" className="bg-orange-600 text-white px-4 py-2 rounded w-full" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </button>
-            <button type="button" className="bg-gray-600 text-white px-4 py-2 rounded w-full">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="bg-gray-600 text-white px-4 py-2 rounded w-full hover:bg-gray-700 transition-colors"
+            >
               Voltar
             </button>
           </div>
         </form>
+
+        {/* Link para cadastro */}
+        <div className="mt-4 text-center">
+          <p className="text-gray-400 text-sm">
+            Não tem login ainda?{' '}
+            <button
+              onClick={() => router.push('/cliente')}
+              className="text-orange-400 hover:text-orange-300 underline font-semibold"
+            >
+              Cadastrar
+            </button>
+          </p>
+        </div>
+
         {mensagem && <p className="mt-4 text-center text-sm text-orange-300">{mensagem}</p>}
       </div>
 
@@ -179,9 +197,6 @@ export default function LoginPage() {
           {mensagem && <p className="mt-4 text-center text-sm text-orange-300">{mensagem}</p>}
         </DialogContent>
       </Dialog>
-
-      {/* Modal Esqueci Senha */}
-      {showEsqueciSenha && <EsqueciSenhaModal onClose={() => setShowEsqueciSenha(false)} />}
     </div>
   );
 }
