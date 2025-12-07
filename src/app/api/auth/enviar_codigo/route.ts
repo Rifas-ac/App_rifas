@@ -24,14 +24,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });
   }
 
-  // Envia o código por e-mail
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  await resend.emails.send({
-    from: "no-reply@seudominio.com",
-    to: email,
-    subject: "Código para troca de senha",
-    html: `<p>Seu código de recuperação de senha é: <b>${codigo}</b></p>`,
-  });
+  // Envia o código por e-mail (se Resend estiver configurado)
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: "no-reply@seudominio.com",
+      to: email,
+      subject: "Código para troca de senha",
+      html: `<p>Seu código de recuperação de senha é: <b>${codigo}</b></p>`,
+    });
+  } else {
+    console.log('⚠️ Resend não configurado. Código:', codigo);
+  }
 
   return NextResponse.json({ ok: true });
 }

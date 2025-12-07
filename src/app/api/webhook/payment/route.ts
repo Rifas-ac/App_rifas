@@ -5,7 +5,7 @@ import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEma
 import { buscarPagamento } from "@/lib/mercadopago";
 import { gerarNumerosUnicos } from "@/utils/geradorDeNumeros";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface MercadoPagoWebhookPayload {
   action: string;
@@ -120,22 +120,26 @@ export async function POST(req: NextRequest) {
 
           console.log(`${numerosEscolhidos.length} tickets criados para o usuário ${usuario.email}`);
 
-          // Envia e-mail de confirmação
-          try {
-            await resend.emails.send({
-              from: "Garagem VW <onboarding@resend.dev>",
-              to: [usuario.email],
-              subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
-              react: await ConfirmacaoCompraEmail({
-                nomeUsuario: usuario.nome,
-                tituloRifa: rifa.titulo,
-                numerosComprados: numerosEscolhidos.map(n => n.toString()),
-              }),
-            });
-            console.log("E-mail de confirmação enviado com sucesso");
-          } catch (emailError) {
-            console.error("Erro ao enviar e-mail:", emailError);
-            // Não falha a transação se o email falhar
+          // Envia e-mail de confirmação (se Resend estiver configurado)
+          if (resend) {
+            try {
+              await resend.emails.send({
+                from: "Garagem VW <onboarding@resend.dev>",
+                to: [usuario.email],
+                subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
+                react: await ConfirmacaoCompraEmail({
+                  nomeUsuario: usuario.nome,
+                  tituloRifa: rifa.titulo,
+                  numerosComprados: numerosEscolhidos.map(n => n.toString()),
+                }),
+              });
+              console.log("E-mail de confirmação enviado com sucesso");
+            } catch (emailError) {
+              console.error("Erro ao enviar e-mail:", emailError);
+              // Não falha a transação se o email falhar
+            }
+          } else {
+            console.log("⚠️ Resend não configurado - email não enviado");
           }
         });
       } else {

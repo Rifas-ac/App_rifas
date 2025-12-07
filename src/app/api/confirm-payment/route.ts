@@ -4,7 +4,7 @@ import { Resend } from "resend";
 import { ConfirmacaoCompraEmail } from "@/components/emails/ConfirmacaoCompraEmail";
 import type { Prisma } from "@prisma/client";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,18 +34,22 @@ export async function POST(req: NextRequest) {
         data: { status: "pago" },
       });
 
-      // Se a atualização foi bem-sucedida, envia o e-mail
-      const { usuario, rifa } = tickets[0];
-      await resend.emails.send({
-        from: "Garagem VW <onboarding@resend.dev>",
-        to: [usuario.email],
-        subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
-        react: await ConfirmacaoCompraEmail({
-          nomeUsuario: usuario.nome,
-          numerosComprados: tickets.map((t: { numero: string }) => t.numero),
-          tituloRifa: rifa.titulo,
-        }),
-      });
+      // Se a atualização foi bem-sucedida, envia o e-mail (se Resend estiver configurado)
+      if (resend) {
+        const { usuario, rifa } = tickets[0];
+        await resend.emails.send({
+          from: "Garagem VW <onboarding@resend.dev>",
+          to: [usuario.email],
+          subject: `✅ Compra Confirmada - Rifa "${rifa.titulo}"`,
+          react: await ConfirmacaoCompraEmail({
+            nomeUsuario: usuario.nome,
+            numerosComprados: tickets.map((t: { numero: string }) => t.numero),
+            tituloRifa: rifa.titulo,
+          }),
+        });
+      } else {
+        console.log("⚠️ Resend não configurado - email não enviado");
+      }
     });
 
     // Após a transação, busca todos os tickets (agora pagos) para retornar
