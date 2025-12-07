@@ -50,6 +50,13 @@ export async function POST(req: NextRequest) {
 
         const rifaId = parseInt(match[1]);
         const usuarioId = parseInt(match[2]);
+
+        // Valida se transaction_amount existe
+        if (!payment.transaction_amount || typeof payment.transaction_amount !== 'number') {
+          console.error("Transaction amount inválido:", payment.transaction_amount);
+          return NextResponse.json({ status: "error", message: "Valor da transação inválido" }, { status: 400 });
+        }
+
         const quantidade = Math.floor(payment.transaction_amount / 3.79); // Calcula quantidade baseado no valor
 
         // Verifica se já não processou este pagamento

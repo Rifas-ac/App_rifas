@@ -63,7 +63,4 @@ export function gerarNumerosUnicos(quantidade: number, numerosDisponiveis: numbe
   const shuffled = [...numerosDisponiveis].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, quantidade);
 }
-  }
 
-return Array.from(numerosGerados);
-}
