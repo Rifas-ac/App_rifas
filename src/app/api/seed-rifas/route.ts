@@ -2,10 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 /**
- * Rota para popular o banco de dados com as rifas iniciais
- * Acesse: /api/admin/seed
+ * Rota PÚBLICA para popular o banco de dados com as rifas iniciais
+ * Acesse: /api/seed-rifas
+ * Só funciona se o banco estiver vazio (segurança)
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     console.log('🌱 Iniciando seed do banco de dados...');
 
@@ -14,6 +15,7 @@ export async function GET(request: Request) {
     if (existingRifas.length > 0) {
       return NextResponse.json({
         message: "Rifas já existem no banco",
+        total: existingRifas.length,
         rifas: existingRifas.map(r => ({
           id: r.id,
           titulo: r.titulo,
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Rifas criadas com sucesso!",
+      message: "✅ Rifas criadas com sucesso!",
       rifas: [
         { id: rifaGol.id, titulo: rifaGol.titulo, status: rifaGol.status },
         { id: rifaChevette.id, titulo: rifaChevette.titulo, status: rifaChevette.status }
