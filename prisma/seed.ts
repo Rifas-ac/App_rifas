@@ -1,48 +1,52 @@
 import { PrismaClient } from "@prisma/client";
 
-// Get the database URL from environment variables
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set in the .env file");
-}
-
-// Append the pgbouncer parameter for Supabase connection pooling
-const urlWithPgBouncer = new URL(databaseUrl);
-urlWithPgBouncer.searchParams.set("pgbouncer", "true");
-
-// Initialize Prisma Client with the modified URL
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: urlWithPgBouncer.toString(),
-    },
-  },
-});
+// Initialize Prisma Client
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Iniciando o processo de seeding...");
+  console.log("🌱 Iniciando seed do banco de dados...");
 
-  // 1. Limpa os dados antigos para evitar duplicatas ao rodar o seed várias vezes
-  await prisma.ticket.deleteMany({});
-  await prisma.rifa.deleteMany({});
-  console.log("Banco de dados limpo.");
+  // Verifica se já existem rifas
+  const existingRifas = await prisma.rifa.findMany();
+  if (existingRifas.length > 0) {
+    console.log("✅ Rifas já existem no banco. Seed não executado para evitar duplicatas.");
+    console.log(`   Total de rifas: ${existingRifas.length}`);
+    existingRifas.forEach(r => console.log(`   - ${r.titulo} (${r.status})`));
+    return;
+  }
 
-  // 2. Cria uma Rifa de exemplo
-  const rifaExemplo = await prisma.rifa.create({
+  console.log("📦 Criando rifas...");
+
+  // Rifa 1: Gol LS 1986 (ATIVA)
+  const rifaGol = await prisma.rifa.create({
     data: {
-      titulo: "Prêmio Especial de Lançamento!",
-      descricao: "Concorra a um incrível kit de desenvolvimento com teclado mecânico, mouse e um monitor ultrawide.",
-      premio: "Kit Dev Completo",
-      valorCota: 3.99,
+      titulo: "Gol LS 1986",
+      descricao: "Clássico dos anos 80 em excelente estado de conservação. Motor 1.6, álcool, com todos os documentos em dia.",
+      premio: "Volkswagen Gol LS 1986",
+      valorCota: 5.0,
       totalNumeros: 100000,
       status: "ativa",
-      imagemUrl: "/images/premio-exemplo.jpg",
+      imagemUrl: "/rifa-gol/gol-0.png",
     },
   });
-  console.log(`Rifa de exemplo criada: ${rifaExemplo.titulo} (ID: ${rifaExemplo.id})`);
+  console.log(`✅ Rifa criada: ${rifaGol.titulo} (ID: ${rifaGol.id})`);
 
-  console.log("Seeding concluído com sucesso!");
+  // Rifa 2: Chevette DL 92 (EM BREVE)
+  const rifaChevette = await prisma.rifa.create({
+    data: {
+      titulo: "Chevette DL 92",
+      descricao: "Chevrolet Chevette DL 1992, completo, ar condicionado, direção hidráulica. Um verdadeiro clássico!",
+      premio: "Chevrolet Chevette DL 1992",
+      valorCota: 5.0,
+      totalNumeros: 100000,
+      status: "em_breve",
+      imagemUrl: "/rifa-Chevete/Chevete-01.jpg",
+    },
+  });
+  console.log(`✅ Rifa criada: ${rifaChevette.titulo} (ID: ${rifaChevette.id})`);
+
+  console.log("\n🎉 Seed concluído com sucesso!");
+  console.log(`   Total de rifas criadas: 2`);
 }
 
 main()
